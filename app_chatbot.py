@@ -87,17 +87,7 @@ TRATAMIENTOS = [
         'imagen_antes': '/static/img/blanqueamiento_antes.jpg',
         'imagen_despues': '/static/img/blanqueamiento_despues.jpg'
     },
-    {
-        'id': 6,
-        'nombre': 'Endodoncia',
-        'descripcion': 'La endodoncia, también conocida como tratamiento de conducto, es un procedimiento que se realiza cuando la pulpa dental (el tejido blando dentro del diente) se infecta o se daña. Este tratamiento permite salvar dientes que de otra manera tendrían que ser extraídos. El proceso incluye la eliminación completa de la pulpa infectada, la limpieza y desinfección de los conductos radiculares, y el sellado hermético para prevenir futuras infecciones. Utilizamos tecnología avanzada como localizadores de ápice y microscopios para garantizar la precisión del tratamiento. La endodoncia es un procedimiento completamente indoloro gracias a la anestesia local, y permite mantener la función y apariencia natural del diente.',
-        'duracion': '1-2 horas',
-        'precio': 300.0,
-        'antes_despues': 'Eliminación completa de la infección y preservación del diente natural. El diente mantiene su función y apariencia original, evitando la necesidad de extracción y reemplazo.',
-        'preguntas_frecuentes': '¿Duele la endodoncia? No, se realiza con anestesia local y es completamente indoloro. ¿Cuánto dura el tratamiento? Generalmente se completa en 1-2 sesiones. ¿Puedo comer después? Sí, una vez que pase el efecto de la anestesia.',
-        'imagen_antes': '/static/img/endodoncia_antes.jpg',
-        'imagen_despues': '/static/img/endodoncia_despues.jpg'
-    },
+
     {
         'id': 7,
         'nombre': 'Corona Dental',
