@@ -262,21 +262,39 @@ def chat():
             # Obtener citas existentes
             existing_appointments = get_existing_appointments()
             
-            # Generar fechas disponibles (próximos 30 días laborables)
+            # Generar fechas disponibles (incluyendo agosto 2025)
             today = datetime.now()
             available_dates = []
             
+            # Agregar fechas de agosto 2025 (que es donde están nuestras citas de prueba)
+            august_2025_dates = []
+            for day in range(1, 32):  # Agosto tiene 31 días
+                fecha = datetime(2025, 8, day)
+                if fecha.weekday() < 5:  # Solo días laborables (Lun-Vie)
+                    fecha_str = fecha.strftime("%Y-%m-%d")
+                    # Verificar si la fecha tiene menos de 8 citas
+                    citas_en_fecha = len(existing_appointments.get(fecha_str, []))
+                    if citas_en_fecha < 8:  # Máximo 8 citas por día
+                        august_2025_dates.append(fecha_str)
+            
+            # Agregar también fechas próximas (próximos 30 días laborables)
             for i in range(1, 31):
                 fecha = today + timedelta(days=i)
                 if fecha.weekday() < 5:  # Solo días laborables (Lun-Vie)
                     fecha_str = fecha.strftime("%Y-%m-%d")
-                    # Verificar si la fecha tiene menos de 8 citas (asumiendo 8 horas disponibles)
+                    # Verificar si la fecha tiene menos de 8 citas
                     citas_en_fecha = len(existing_appointments.get(fecha_str, []))
                     if citas_en_fecha < 8:  # Máximo 8 citas por día
                         available_dates.append(fecha_str)
             
+            # Combinar ambas listas y eliminar duplicados
+            all_dates = august_2025_dates + available_dates
+            available_dates = list(set(all_dates))  # Eliminar duplicados
+            available_dates.sort()  # Ordenar por fecha
+            
             print(f"Seleccionar fecha - Datos recibidos: {data}")
             print(f"Citas existentes: {existing_appointments}")
+            print(f"Fechas disponibles: {available_dates}")
             
             return jsonify({
                 'type': 'calendar',

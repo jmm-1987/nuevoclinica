@@ -252,6 +252,39 @@
         .btn-cancel { background: var(--danger-color); color: white; }
         .btn-delete { background: #6b7280; color: white; }
 
+        .btn-whatsapp { 
+            background: #25D366; 
+            color: white; 
+            border: none;
+            padding: 6px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 5px;
+        }
+
+        .btn-email { 
+            background: #007bff; 
+            color: white; 
+            border: none;
+            padding: 6px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 5px;
+        }
+
+        .btn-whatsapp:hover { background: #128C7E; }
+        .btn-email:hover { background: #0056b3; }
+
+        .contact-buttons {
+            display: flex;
+            gap: 5px;
+            margin-top: 8px;
+        }
+
         .filters-section {
             background: white;
             border-radius: 15px;
@@ -438,7 +471,7 @@
             <!-- Lista de Citas -->
             <div class="citas-section">
                 <div class="section-header">
-                    <h3><i class="fas fa-list"></i> Lista de Citas</h3>
+                    <h3><i class="fas fa-list"></i> Lista de Citas <span id="fechaSeleccionada"></span></h3>
                     <button class="btn btn-success btn-sm" onclick="exportarCitas()">
                         <i class="fas fa-download"></i> Exportar
                     </button>
@@ -527,7 +560,7 @@
                 const response = await fetch(`/api/citas?${params}`);
                 citas = await response.json();
                 
-                mostrarCitas();
+                mostrarCitas(); // Mostrar todas las citas inicialmente
                 generarCalendario();
             } catch (error) {
                 console.error('Error cargando citas:', error);
@@ -535,15 +568,30 @@
         }
 
         // Mostrar citas en la lista
-        function mostrarCitas() {
+        function mostrarCitas(fechaSeleccionada = null) {
             const container = document.getElementById('citasList');
+            const fechaSpan = document.getElementById('fechaSeleccionada');
             
-            if (citas.length === 0) {
+            // Filtrar citas por fecha si se especifica
+            let citasAMostrar = citas;
+            if (fechaSeleccionada) {
+                citasAMostrar = citas.filter(cita => cita.fecha === fechaSeleccionada);
+                fechaSpan.innerHTML = `- ${new Date(fechaSeleccionada).toLocaleDateString('es-ES', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                })}`;
+            } else {
+                fechaSpan.innerHTML = '';
+            }
+            
+            if (citasAMostrar.length === 0) {
                 container.innerHTML = '<p class="text-center text-muted">No hay citas que mostrar</p>';
                 return;
             }
 
-            container.innerHTML = citas.map(cita => `
+            container.innerHTML = citasAMostrar.map(cita => `
                 <div class="cita-item">
                     <div class="cita-header">
                         <span class="cita-nombre">${cita.nombre}</span>
@@ -575,6 +623,14 @@
                             <i class="fas fa-trash"></i> Eliminar
                         </button>
                     </div>
+                    <div class="contact-buttons">
+                        <button class="btn-whatsapp" onclick="contactarWhatsApp('${cita.telefono}', '${cita.nombre}')">
+                            <i class="fab fa-whatsapp"></i> WhatsApp
+                        </button>
+                        <button class="btn-email" onclick="contactarEmail('${cita.email}', '${cita.nombre}')">
+                            <i class="fas fa-envelope"></i> Email
+                        </button>
+                    </div>
                 </div>
             `).join('');
         }
@@ -593,6 +649,15 @@
                 if (response.ok) {
                     cargarCitas();
                     cargarEstadisticas();
+                    // Mantener la fecha seleccionada si hay una
+                    const fechaSpan = document.getElementById('fechaSeleccionada');
+                    if (fechaSpan.innerHTML) {
+                        // Extraer la fecha del texto del span
+                        const fechaTexto = fechaSpan.innerHTML.match(/\d{4}-\d{2}-\d{2}/);
+                        if (fechaTexto) {
+                            mostrarCitas(fechaTexto[0]);
+                        }
+                    }
                 }
             } catch (error) {
                 console.error('Error cambiando estado:', error);
@@ -613,6 +678,15 @@
                 if (response.ok) {
                     cargarCitas();
                     cargarEstadisticas();
+                    // Mantener la fecha seleccionada si hay una
+                    const fechaSpan = document.getElementById('fechaSeleccionada');
+                    if (fechaSpan.innerHTML) {
+                        // Extraer la fecha del texto del span
+                        const fechaTexto = fechaSpan.innerHTML.match(/\d{4}-\d{2}-\d{2}/);
+                        if (fechaTexto) {
+                            mostrarCitas(fechaTexto[0]);
+                        }
+                    }
                 }
             } catch (error) {
                 console.error('Error eliminando cita:', error);
@@ -822,6 +896,11 @@
             // Crear la fecha correctamente para evitar problemas de zona horaria
             const [year, month, day] = fecha.split('-').map(Number);
             fechaActual = new Date(year, month - 1, day); // month - 1 porque los meses van de 0-11
+            
+            // Mostrar citas del día seleccionado
+            mostrarCitas(fecha);
+            
+            // Cambiar a vista de día
             cambiarVista('dia');
         }
 
@@ -878,6 +957,44 @@
                     }
                 });
             }
+        }
+
+        // Contactar por WhatsApp
+        function contactarWhatsApp(telefono, nombre) {
+            // Limpiar el teléfono (quitar espacios y caracteres especiales)
+            const telefonoLimpio = telefono.replace(/\s+/g, '').replace(/[^\d]/g, '');
+            
+            // Si no empieza con código de país, agregar +34 (España)
+            const telefonoCompleto = telefonoLimpio.startsWith('34') ? 
+                `+${telefonoLimpio}` : 
+                telefonoLimpio.startsWith('6') ? 
+                    `+34${telefonoLimpio}` : 
+                    `+34${telefonoLimpio}`;
+            
+            // Mensaje predeterminado
+            const mensaje = encodeURIComponent(`Hola ${nombre}, le contactamos desde la clínica dental para confirmar su cita.`);
+            
+            // Abrir WhatsApp Web
+            const url = `https://wa.me/${telefonoCompleto}?text=${mensaje}`;
+            window.open(url, '_blank');
+        }
+
+        // Contactar por Email
+        function contactarEmail(email, nombre) {
+            // Asunto predeterminado
+            const asunto = encodeURIComponent('Confirmación de Cita - Clínica Dental');
+            
+            // Cuerpo del email predeterminado
+            const cuerpo = encodeURIComponent(`Estimado/a ${nombre},
+
+Le contactamos desde la clínica dental para confirmar su cita.
+
+Atentamente,
+Equipo de la Clínica Dental`);
+            
+            // Abrir cliente de email
+            const url = `mailto:${email}?subject=${asunto}&body=${cuerpo}`;
+            window.open(url);
         }
 
         // Exportar citas
