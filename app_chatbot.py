@@ -165,10 +165,10 @@ def chat():
                 'title': '👋 ¡Bienvenido a nuestra clínica dental!',
                 'message': 'Selecciona una opción:',
                 'options': [
-                    {'id': 'tratamientos', 'text': '📋 Información de tratamientos', 'icon': '🦷'},
-                    {'id': 'agendar', 'text': '📅 Agenda tu cita', 'icon': '📅'},
-                    {'id': 'ubicaciones', 'text': '📍 Ubicaciones', 'icon': '📍'},
-                    {'id': 'financiacion', 'text': '💰 Información de financiación', 'icon': '💰'}
+                    {'id': 'tratamientos', 'text': ' Información de tratamientos', 'icon': '🦷'},
+                    {'id': 'agendar', 'text': ' Agenda tu cita', 'icon': '📅'},
+                    {'id': 'ubicaciones', 'text': ' Ubicaciones', 'icon': '📍'},
+                    {'id': 'financiacion', 'text': ' Información de financiación', 'icon': '💰'}
                 ]
             })
         
@@ -180,7 +180,7 @@ def chat():
                     'text': tratamiento['nombre'],
                     'icon': '🦷'
                 })
-            options.append({'id': 'volver', 'text': '🔙 Volver al menú principal', 'icon': '🔙'})
+            options.append({'id': 'volver', 'text': ' Volver al menú principal', 'icon': '🔙'})
             
             return jsonify({
                 'type': 'menu',
@@ -221,7 +221,7 @@ def chat():
                 'options': [
                     {'id': 'revision_periodica', 'text': '🦷 Revisión periódica', 'icon': '🦷'},
                     {'id': 'otros_motivos', 'text': '📝 Otros motivos', 'icon': '📝'},
-                    {'id': 'volver', 'text': '🔙 Volver al menú principal', 'icon': '🔙'}
+                    {'id': 'volver', 'text': ' Volver al menú principal', 'icon': '🔙'}
                 ]
             })
         
@@ -398,7 +398,7 @@ def chat():
 📧 Recibirás un email de confirmación.<br>
 📞 Te llamaremos para confirmar la cita.''',
                     'options': [
-                        {'id': 'menu_principal', 'text': '🏠 Volver al menú principal', 'icon': '🏠'}
+                        {'id': 'menu_principal', 'text': ' Volver al menú principal', 'icon': '🏠'}
                     ]
                 })
             except Exception as e:
@@ -408,7 +408,7 @@ def chat():
                     'title': '❌ Error al agendar cita',
                     'message': 'Ha ocurrido un error al guardar tu cita. Por favor, inténtalo de nuevo.',
                     'options': [
-                        {'id': 'menu_principal', 'text': '🏠 Volver al menú principal', 'icon': '🏠'}
+                        {'id': 'menu_principal', 'text': ' Volver al menú principal', 'icon': '🏠'}
                     ]
                 })
         
@@ -429,7 +429,7 @@ def chat():
                 'title': '📍 UBICACIONES DE NUESTRAS CLÍNICAS',
                 'content': {'html': content},
                 'options': [
-                    {'id': 'volver', 'text': '🔙 Volver al menú principal', 'icon': '🔙'}
+                    {'id': 'volver', 'text': ' Volver al menú principal', 'icon': '🔙'}
                 ]
             })
         
@@ -468,7 +468,7 @@ def chat():
                 'title': '💰 INFORMACIÓN DE FINANCIACIÓN',
                 'content': {'html': content},
                 'options': [
-                    {'id': 'volver', 'text': '🔙 Volver al menú principal', 'icon': '🔙'}
+                    {'id': 'volver', 'text': ' Volver al menú principal', 'icon': '🔙'}
                 ]
             })
         
@@ -494,7 +494,7 @@ def chat():
             'title': '❌ Error del servidor',
             'message': 'Ha ocurrido un error inesperado. Por favor, inténtalo de nuevo.',
             'options': [
-                {'id': 'menu_principal', 'text': '🏠 Volver al menú principal', 'icon': '🏠'}
+                {'id': 'menu_principal', 'text': ' Volver al menú principal', 'icon': '🏠'}
             ]
         })
 
