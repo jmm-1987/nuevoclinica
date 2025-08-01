@@ -700,7 +700,9 @@
                 } else if (data.type === 'confirmation') {
                     content += this.renderConfirmation(data);
                 } else if (data.type === 'success') {
-                    content += `<div class="success-message">${data.message}</div>`;
+                    // El mensaje de éxito puede contener HTML, así que lo insertamos directamente
+                    const successMessage = data.message || 'Cita agendada con éxito';
+                    content += `<div class="success-message">${successMessage}</div>`;
                 }
                 
                 if (data.options) {

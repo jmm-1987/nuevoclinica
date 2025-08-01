@@ -345,17 +345,15 @@ def chat():
         return jsonify({
             'type': 'success',
             'title': '✅ ¡Cita agendada con éxito!',
-            'message': f'''
-            <strong>Resumen de tu cita:</strong><br>
-            👤 Paciente: {datos['nombre']}<br>
-            📧 Email: {datos['email']}<br>
-            📞 Teléfono: {datos['telefono']}<br>
-            📝 Motivo: {motivo}<br>
-            📅 Fecha: {data.get('fecha')}<br>
-            🕐 Hora: {data.get('hora')}<br><br>
-            📧 Recibirás un email de confirmación.<br>
-            📞 Te llamaremos para confirmar la cita.
-            ''',
+            'message': f'''<strong>Resumen de tu cita:</strong><br>
+👤 Paciente: {datos['nombre']}<br>
+📧 Email: {datos['email']}<br>
+📞 Teléfono: {datos['telefono']}<br>
+📝 Motivo: {motivo}<br>
+📅 Fecha: {data.get('fecha')}<br>
+🕐 Hora: {data.get('hora')}<br><br>
+📧 Recibirás un email de confirmación.<br>
+📞 Te llamaremos para confirmar la cita.''',
             'options': [
                 {'id': 'menu_principal', 'text': '🏠 Volver al menú principal', 'icon': '🏠'}
             ]
@@ -437,4 +435,5 @@ def chat():
     return jsonify({'error': 'Acción no reconocida'})
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001) 
+    # Configuración para desarrollo local
+    app.run(debug=True, port=5001, host='0.0.0.0') 

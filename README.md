@@ -32,18 +32,46 @@ Un asistente virtual moderno para clínica dental con interfaz web elegante y na
 ### Requisitos
 - Python 3.6 o superior
 - Flask
+- Gunicorn (para producción)
 
-### Instalación
+### Instalación Local
 ```bash
-# Instalar Flask
-pip install flask
+# Instalar dependencias
+pip install -r requirements.txt
 
 # Ejecutar la aplicación
 python app_chatbot.py
 ```
 
-### Acceso
+### Acceso Local
 La aplicación estará disponible en: `http://localhost:5001`
+
+### Despliegue en Render
+
+1. **Crear cuenta en Render**: Ve a [render.com](https://render.com) y crea una cuenta
+
+2. **Conectar repositorio**: 
+   - Conecta tu repositorio de GitHub/GitLab
+   - Render detectará automáticamente la configuración
+
+3. **Configuración automática**:
+   - Render usará el archivo `render.yaml` para configurar el servicio
+   - El comando de inicio será: `gunicorn app_chatbot:app`
+
+4. **Variables de entorno** (opcional):
+   - Puedes agregar variables de entorno en el dashboard de Render
+   - Por ejemplo: `FLASK_ENV=production`
+
+5. **Despliegue**:
+   - Render desplegará automáticamente tu aplicación
+   - Obtendrás una URL pública (ej: `https://tu-app.onrender.com`)
+
+### Archivos de Configuración para Render
+
+- `render.yaml`: Configuración del servicio web
+- `gunicorn.conf.py`: Configuración del servidor WSGI
+- `requirements.txt`: Dependencias de Python
+- `.gitignore`: Archivos excluidos del repositorio
 
 ## 🎯 Experiencia de Usuario
 
