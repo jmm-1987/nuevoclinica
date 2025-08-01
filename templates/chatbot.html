@@ -27,14 +27,29 @@
             box-sizing: border-box;
         }
 
+        html {
+            overflow-x: hidden;
+            width: 100%;
+        }
+
         body {
             font-family: 'Poppins', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            margin: 0;
+            box-sizing: border-box;
+            overflow-x: hidden;
+        }
+
+        .chat-wrapper {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
         }
 
         .chat-container {
@@ -264,6 +279,15 @@
 
         .success-message {
             background: linear-gradient(135deg, var(--success-color), #059669);
+            color: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-top: 15px;
+            box-shadow: var(--shadow);
+        }
+
+        .error-message {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
             color: white;
             border-radius: var(--border-radius);
             padding: 20px;
@@ -518,11 +542,38 @@
             color: white;
         }
 
+        .time-slot.available {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+            border-color: var(--success-color);
+        }
+
+        .time-slot.available:hover {
+            background: var(--success-color);
+            color: white;
+        }
+
         .time-slot.disabled {
             background: #f1f5f9;
             color: #cbd5e1;
             border-color: #e2e8f0;
             cursor: not-allowed;
+        }
+
+        .time-slot.occupied {
+            background: #fef2f2;
+            color: #dc2626;
+            border-color: #fecaca;
+            cursor: not-allowed;
+            position: relative;
+        }
+
+        .time-slot.occupied::after {
+            content: "❌";
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 0.8rem;
         }
 
         /* Estilos para la confirmación de cita */
@@ -556,10 +607,26 @@
         }
 
         @media (max-width: 768px) {
+            body {
+                padding: 0;
+                width: 100vw;
+                overflow-x: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .chat-wrapper {
+                width: 100%;
+                max-width: 100%;
+                margin: 0 auto;
+            }
+            
             .chat-container {
                 height: 100vh;
                 max-width: 100%;
                 border-radius: 0;
+                width: 100%;
             }
             
             .chat-header {
@@ -586,22 +653,24 @@
     </style>
 </head>
 <body>
-    <div class="chat-container">
-        <div class="chat-header">
-            <h1>🦷 Clínica Dental</h1>
-            <p>Asistente Virtual</p>
-        </div>
-        
-        <div class="chat-messages" id="chatMessages">
-            <!-- Los mensajes se cargarán dinámicamente -->
-        </div>
-        
-        <div class="chat-input">
-            <div class="input-group">
-                <input type="text" class="chat-input-field" id="userInput" placeholder="Escribe tu mensaje..." style="display: none;">
-                <button class="send-button" id="sendButton" style="display: none;">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
+    <div class="chat-wrapper">
+        <div class="chat-container">
+            <div class="chat-header">
+                <h1>🦷 Clínica Dental</h1>
+                <p>Asistente Virtual</p>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <!-- Los mensajes se cargarán dinámicamente -->
+            </div>
+            
+            <div class="chat-input">
+                <div class="input-group">
+                    <input type="text" class="chat-input-field" id="userInput" placeholder="Escribe tu mensaje..." style="display: none;">
+                    <button class="send-button" id="sendButton" style="display: none;">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -668,10 +737,43 @@
                         })
                     });
                     
-                    return await response.json();
+                    if (!response.ok) {
+                        console.error('Error del servidor:', response.status, response.statusText);
+                        return {
+                            type: 'error',
+                            title: '❌ Error del servidor',
+                            message: 'Ha ocurrido un error en el servidor. Por favor, inténtalo de nuevo.',
+                            options: [
+                                {'id': 'menu_principal', 'text': '🏠 Volver al menú principal', 'icon': '🏠'}
+                            ]
+                        };
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Verificar si la respuesta tiene un error
+                    if (data.error) {
+                        return {
+                            type: 'error',
+                            title: '❌ Error',
+                            message: data.error,
+                            options: [
+                                {'id': 'menu_principal', 'text': '🏠 Volver al menú principal', 'icon': '🏠'}
+                            ]
+                        };
+                    }
+                    
+                    return data;
                 } catch (error) {
                     console.error('Error:', error);
-                    return { error: 'Error de conexión' };
+                    return {
+                        type: 'error',
+                        title: '❌ Error de conexión',
+                        message: 'No se pudo conectar con el servidor. Por favor, verifica tu conexión e inténtalo de nuevo.',
+                        options: [
+                            {'id': 'menu_principal', 'text': '🏠 Volver al menú principal', 'icon': '🏠'}
+                        ]
+                    };
                 }
             }
             
@@ -703,6 +805,10 @@
                     // El mensaje de éxito puede contener HTML, así que lo insertamos directamente
                     const successMessage = data.message || 'Cita agendada con éxito';
                     content += `<div class="success-message">${successMessage}</div>`;
+                } else if (data.type === 'error') {
+                    // Manejo específico para errores
+                    const errorMessage = data.message || 'Ha ocurrido un error';
+                    content += `<div class="error-message">${errorMessage}</div>`;
                 }
                 
                 if (data.options) {
@@ -900,10 +1006,29 @@
             renderTimeSelector(data) {
                 let html = '<div class="time-selector">';
                 html += '<h4 style="color: var(--primary-color); margin-bottom: 15px;">🕐 Selecciona una hora</h4>';
+                
+                // Definir todas las horas posibles
+                const allTimes = [
+                    '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00',
+                    '16:00', '16:30', '17:00', '17:30', '18:00', '18:30'
+                ];
+                
                 html += '<div class="time-grid">';
                 
-                data.available_times.forEach(time => {
-                    html += `<div class="time-slot" data-time="${time}">${time}</div>`;
+                allTimes.forEach(time => {
+                    const isOccupied = data.occupied_times && data.occupied_times.includes(time);
+                    const isAvailable = data.available_times && data.available_times.includes(time);
+                    
+                    let classes = 'time-slot';
+                    if (isOccupied) {
+                        classes += ' occupied';
+                    } else if (isAvailable) {
+                        classes += ' available';
+                    } else {
+                        classes += ' disabled';
+                    }
+                    
+                    html += `<div class="${classes}" data-time="${time}" ${isOccupied ? 'data-occupied="true"' : ''}>${time}</div>`;
                 });
                 
                 html += '</div>';
@@ -1053,7 +1178,7 @@
             }
 
             addTimeSelectorListeners(messageDiv, data) {
-                const timeSlots = messageDiv.querySelectorAll('.time-slot');
+                const timeSlots = messageDiv.querySelectorAll('.time-slot:not(.occupied):not(.disabled)');
                 timeSlots.forEach(slot => {
                     slot.addEventListener('click', async (e) => {
                         e.preventDefault();

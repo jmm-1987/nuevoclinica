@@ -30,6 +30,29 @@ def init_database():
     conn.commit()
     conn.close()
 
+def get_existing_appointments():
+    """Obtiene todas las citas existentes de la base de datos"""
+    try:
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT fecha, hora FROM citas WHERE estado != "cancelada"')
+        appointments = cursor.fetchall()
+        
+        conn.close()
+        
+        # Convertir a formato más fácil de usar
+        existing_appointments = {}
+        for fecha, hora in appointments:
+            if fecha not in existing_appointments:
+                existing_appointments[fecha] = []
+            existing_appointments[fecha].append(hora)
+        
+        return existing_appointments
+    except Exception as e:
+        print(f"Error al obtener citas existentes: {str(e)}")
+        return {}
+
 # Datos de tratamientos hardcodeados
 TRATAMIENTOS = [
     {
@@ -87,7 +110,6 @@ TRATAMIENTOS = [
         'imagen_antes': '/static/img/blanqueamiento_antes.jpg',
         'imagen_despues': '/static/img/blanqueamiento_despues.jpg'
     },
-
     {
         'id': 7,
         'nombre': 'Corona Dental',
@@ -132,297 +154,349 @@ def index():
 @app.route('/api/chat', methods=['POST'])
 def chat():
     """API para manejar las interacciones del chatbot"""
-    data = request.get_json()
-    action = data.get('action')
-    value = data.get('value')
-    
-    if action == 'menu_principal':
-        return jsonify({
-            'type': 'menu',
-            'title': '👋 ¡Bienvenido a nuestra clínica dental!',
-            'message': 'Selecciona una opción:',
-            'options': [
-                {'id': 'tratamientos', 'text': '📋 Información de tratamientos', 'icon': '🦷'},
-                {'id': 'agendar', 'text': '📅 Agenda tu cita', 'icon': '📅'},
-                {'id': 'ubicaciones', 'text': '📍 Ubicaciones', 'icon': '📍'},
-                {'id': 'financiacion', 'text': '💰 Información de financiación', 'icon': '💰'}
-            ]
-        })
-    
-    elif action == 'tratamientos':
-        options = []
-        for tratamiento in TRATAMIENTOS:
-            options.append({
-                'id': f'tratamiento_{tratamiento["id"]}',
-                'text': tratamiento['nombre'],
-                'icon': '🦷'
+    try:
+        data = request.get_json()
+        action = data.get('action')
+        value = data.get('value')
+        
+        if action == 'menu_principal':
+            return jsonify({
+                'type': 'menu',
+                'title': '👋 ¡Bienvenido a nuestra clínica dental!',
+                'message': 'Selecciona una opción:',
+                'options': [
+                    {'id': 'tratamientos', 'text': '📋 Información de tratamientos', 'icon': '🦷'},
+                    {'id': 'agendar', 'text': '📅 Agenda tu cita', 'icon': '📅'},
+                    {'id': 'ubicaciones', 'text': '📍 Ubicaciones', 'icon': '📍'},
+                    {'id': 'financiacion', 'text': '💰 Información de financiación', 'icon': '💰'}
+                ]
             })
-        options.append({'id': 'volver', 'text': '🔙 Volver al menú principal', 'icon': '🔙'})
         
-        return jsonify({
-            'type': 'menu',
-            'title': '📋 TRATAMIENTOS DISPONIBLES',
-            'message': 'Selecciona un tratamiento para ver más detalles:',
-            'options': options
-        })
-    
-    elif action == 'tratamiento_detalle':
-        tratamiento_id = int(value.split('_')[1])
-        tratamiento = next((t for t in TRATAMIENTOS if t['id'] == tratamiento_id), None)
+        elif action == 'tratamientos':
+            options = []
+            for tratamiento in TRATAMIENTOS:
+                options.append({
+                    'id': f'tratamiento_{tratamiento["id"]}',
+                    'text': tratamiento['nombre'],
+                    'icon': '🦷'
+                })
+            options.append({'id': 'volver', 'text': '🔙 Volver al menú principal', 'icon': '🔙'})
+            
+            return jsonify({
+                'type': 'menu',
+                'title': '📋 TRATAMIENTOS DISPONIBLES',
+                'message': 'Selecciona un tratamiento para ver más detalles:',
+                'options': options
+            })
         
-        if tratamiento:
-            content = {
-                'descripcion': tratamiento['descripcion'],
-                'duracion': tratamiento['duracion'],
-                'precio': f'{tratamiento["precio"]}€',
-                'antes_despues': tratamiento['antes_despues'],
-                'preguntas_frecuentes': tratamiento['preguntas_frecuentes'],
-                'imagen_antes': tratamiento['imagen_antes'],
-                'imagen_despues': tratamiento['imagen_despues']
+        elif action == 'tratamiento_detalle':
+            tratamiento_id = int(value.split('_')[1])
+            tratamiento = next((t for t in TRATAMIENTOS if t['id'] == tratamiento_id), None)
+            
+            if tratamiento:
+                content = {
+                    'descripcion': tratamiento['descripcion'],
+                    'duracion': tratamiento['duracion'],
+                    'precio': f'{tratamiento["precio"]}€',
+                    'antes_despues': tratamiento['antes_despues'],
+                    'preguntas_frecuentes': tratamiento['preguntas_frecuentes'],
+                    'imagen_antes': tratamiento['imagen_antes'],
+                    'imagen_despues': tratamiento['imagen_despues']
+                }
+                
+                return jsonify({
+                    'type': 'detail',
+                    'title': f'📋 {tratamiento["nombre"]}',
+                    'content': content,
+                    'options': [
+                        {'id': 'volver_tratamientos', 'text': '🔙 Volver a tratamientos', 'icon': '🔙'}
+                    ]
+                })
+        
+        elif action == 'agendar':
+            return jsonify({
+                'type': 'menu',
+                'title': '📅 AGENDAR CITA',
+                'message': 'Selecciona el motivo de tu visita:',
+                'options': [
+                    {'id': 'revision_periodica', 'text': '🦷 Revisión periódica', 'icon': '🦷'},
+                    {'id': 'otros_motivos', 'text': '📝 Otros motivos', 'icon': '📝'},
+                    {'id': 'volver', 'text': '🔙 Volver al menú principal', 'icon': '🔙'}
+                ]
+            })
+        
+        elif action == 'revision_periodica':
+            return jsonify({
+                'type': 'form',
+                'title': '📅 Agendar: Revisión Periódica',
+                'message': 'Completa tus datos para la revisión periódica:',
+                'form_fields': [
+                    {'id': 'nombre', 'label': '👤 Nombre completo', 'type': 'text', 'required': True},
+                    {'id': 'email', 'label': '📧 Email', 'type': 'email', 'required': True},
+                    {'id': 'telefono', 'label': '📞 Teléfono', 'type': 'tel', 'required': True}
+                ],
+                'motivo': 'Revisión periódica',
+                'options': [
+                    {'id': 'volver_agendar', 'text': '🔙 Volver', 'icon': '🔙'}
+                ]
+            })
+        
+        elif action == 'otros_motivos':
+            return jsonify({
+                'type': 'form',
+                'title': '📅 Agendar: Otros Motivos',
+                'message': 'Completa tus datos y describe el motivo de tu visita:',
+                'form_fields': [
+                    {'id': 'nombre', 'label': '👤 Nombre completo', 'type': 'text', 'required': True},
+                    {'id': 'email', 'label': '📧 Email', 'type': 'email', 'required': True},
+                    {'id': 'telefono', 'label': '📞 Teléfono', 'type': 'tel', 'required': True},
+                    {'id': 'motivo', 'label': '📝 Describe el motivo de tu visita', 'type': 'textarea', 'required': True}
+                ],
+                'motivo': 'Otros motivos',
+                'options': [
+                    {'id': 'volver_agendar', 'text': '🔙 Volver', 'icon': '🔙'}
+                ]
+            })
+        
+        elif action == 'seleccionar_fecha':
+            # Obtener citas existentes
+            existing_appointments = get_existing_appointments()
+            
+            # Generar fechas disponibles (próximos 30 días laborables)
+            today = datetime.now()
+            available_dates = []
+            
+            for i in range(1, 31):
+                fecha = today + timedelta(days=i)
+                if fecha.weekday() < 5:  # Solo días laborables (Lun-Vie)
+                    fecha_str = fecha.strftime("%Y-%m-%d")
+                    # Verificar si la fecha tiene menos de 8 citas (asumiendo 8 horas disponibles)
+                    citas_en_fecha = len(existing_appointments.get(fecha_str, []))
+                    if citas_en_fecha < 8:  # Máximo 8 citas por día
+                        available_dates.append(fecha_str)
+            
+            print(f"Seleccionar fecha - Datos recibidos: {data}")
+            print(f"Citas existentes: {existing_appointments}")
+            
+            return jsonify({
+                'type': 'calendar',
+                'title': '📅 Selecciona una fecha',
+                'message': 'Elige el día que prefieres para tu cita:',
+                'available_dates': available_dates,
+                'existing_appointments': existing_appointments,
+                'datos_paciente': data.get('datos_paciente'),
+                'motivo': data.get('motivo'),
+                'options': [
+                    {'id': 'volver_datos', 'text': '🔙 Volver', 'icon': '🔙'}
+                ]
+            })
+        
+        elif action == 'seleccionar_hora':
+            # Obtener citas existentes para la fecha seleccionada
+            existing_appointments = get_existing_appointments()
+            fecha_seleccionada = data.get('fecha')
+            citas_ocupadas = existing_appointments.get(fecha_seleccionada, [])
+            
+            # Horarios disponibles (mañana y tarde)
+            all_times = [
+                '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00',
+                '16:00', '16:30', '17:00', '17:30', '18:00', '18:30'
+            ]
+            
+            # Filtrar horas ocupadas
+            available_times = [time for time in all_times if time not in citas_ocupadas]
+            
+            print(f"Fecha seleccionada: {fecha_seleccionada}")
+            print(f"Horas ocupadas: {citas_ocupadas}")
+            print(f"Horas disponibles: {available_times}")
+            
+            return jsonify({
+                'type': 'time_selector',
+                'title': '🕐 Selecciona una hora',
+                'message': f'Elige la hora que prefieres para el {data.get("fecha")}:',
+                'available_times': available_times,
+                'occupied_times': citas_ocupadas,
+                'datos_paciente': data.get('datos_paciente'),
+                'motivo': data.get('motivo'),
+                'fecha': data.get('fecha'),
+                'options': [
+                    {'id': 'volver_fecha', 'text': '🔙 Volver', 'icon': '🔙'}
+                ]
+            })
+        
+        elif action == 'confirmar_cita':
+            datos = data.get('datos_paciente')
+            motivo = data.get('motivo')
+            if motivo == 'Otros motivos':
+                motivo = datos.get('motivo', 'Otros motivos')
+            
+            # Formatear fecha para mostrar
+            fecha_obj = datetime.strptime(data.get('fecha'), '%Y-%m-%d')
+            fecha_formateada = fecha_obj.strftime('%d/%m/%Y')
+            
+            # Datos de confirmación
+            confirmation_data = {
+                'nombre': datos['nombre'],
+                'email': datos['email'],
+                'telefono': datos['telefono'],
+                'motivo': motivo,
+                'fecha': fecha_formateada,
+                'hora': data.get('hora')
             }
             
             return jsonify({
-                'type': 'detail',
-                'title': f'📋 {tratamiento["nombre"]}',
-                'content': content,
+                'type': 'confirmation',
+                'title': '✅ Confirma tu cita',
+                'message': 'Revisa los datos de tu cita antes de confirmar:',
+                'confirmation_data': confirmation_data,
+                'datos_paciente': datos,
+                'motivo': motivo,
+                'fecha': data.get('fecha'),
+                'hora': data.get('hora'),
                 'options': [
-                    {'id': 'volver_tratamientos', 'text': '🔙 Volver a tratamientos', 'icon': '🔙'}
+                    {'id': 'guardar_cita', 'text': '✅ Confirmar cita', 'icon': '✅'},
+                    {'id': 'volver_hora', 'text': '🔙 Volver', 'icon': '🔙'}
                 ]
             })
-    
-    elif action == 'agendar':
-        return jsonify({
-            'type': 'menu',
-            'title': '📅 AGENDAR CITA',
-            'message': 'Selecciona el motivo de tu visita:',
-            'options': [
-                {'id': 'revision_periodica', 'text': '🦷 Revisión periódica', 'icon': '🦷'},
-                {'id': 'otros_motivos', 'text': '📝 Otros motivos', 'icon': '📝'},
-                {'id': 'volver', 'text': '🔙 Volver al menú principal', 'icon': '🔙'}
-            ]
-        })
-    
-    elif action == 'revision_periodica':
-        return jsonify({
-            'type': 'form',
-            'title': '📅 Agendar: Revisión Periódica',
-            'message': 'Completa tus datos para la revisión periódica:',
-            'form_fields': [
-                {'id': 'nombre', 'label': '👤 Nombre completo', 'type': 'text', 'required': True},
-                {'id': 'email', 'label': '📧 Email', 'type': 'email', 'required': True},
-                {'id': 'telefono', 'label': '📞 Teléfono', 'type': 'tel', 'required': True}
-            ],
-            'motivo': 'Revisión periódica',
-            'options': [
-                {'id': 'volver_agendar', 'text': '🔙 Volver', 'icon': '🔙'}
-            ]
-        })
-    
-    elif action == 'otros_motivos':
-        return jsonify({
-            'type': 'form',
-            'title': '📅 Agendar: Otros Motivos',
-            'message': 'Completa tus datos y describe el motivo de tu visita:',
-            'form_fields': [
-                {'id': 'nombre', 'label': '👤 Nombre completo', 'type': 'text', 'required': True},
-                {'id': 'email', 'label': '📧 Email', 'type': 'email', 'required': True},
-                {'id': 'telefono', 'label': '📞 Teléfono', 'type': 'tel', 'required': True},
-                {'id': 'motivo', 'label': '📝 Describe el motivo de tu visita', 'type': 'textarea', 'required': True}
-            ],
-            'motivo': 'Otros motivos',
-            'options': [
-                {'id': 'volver_agendar', 'text': '🔙 Volver', 'icon': '🔙'}
-            ]
-        })
-    
-    elif action == 'seleccionar_fecha':
-        # Generar fechas disponibles (próximos 30 días laborables)
-        today = datetime.now()
-        available_dates = []
         
-        for i in range(1, 31):
-            fecha = today + timedelta(days=i)
-            if fecha.weekday() < 5:  # Solo días laborables (Lun-Vie)
-                available_dates.append(fecha.strftime("%Y-%m-%d"))
-        
-        print(f"Seleccionar fecha - Datos recibidos: {data}")
-        
-        return jsonify({
-            'type': 'calendar',
-            'title': '📅 Selecciona una fecha',
-            'message': 'Elige el día que prefieres para tu cita:',
-            'available_dates': available_dates,
-            'datos_paciente': data.get('datos_paciente'),
-            'motivo': data.get('motivo'),
-            'options': [
-                {'id': 'volver_datos', 'text': '🔙 Volver', 'icon': '🔙'}
-            ]
-        })
-    
-    elif action == 'seleccionar_hora':
-        # Horarios disponibles (mañana y tarde)
-        available_times = [
-            '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00',
-            '16:00', '16:30', '17:00', '17:30', '18:00', '18:30'
-        ]
-        
-        return jsonify({
-            'type': 'time_selector',
-            'title': '🕐 Selecciona una hora',
-            'message': f'Elige la hora que prefieres para el {data.get("fecha")}:',
-            'available_times': available_times,
-            'datos_paciente': data.get('datos_paciente'),
-            'motivo': data.get('motivo'),
-            'fecha': data.get('fecha'),
-            'options': [
-                {'id': 'volver_fecha', 'text': '🔙 Volver', 'icon': '🔙'}
-            ]
-        })
-    
-    elif action == 'confirmar_cita':
-        datos = data.get('datos_paciente')
-        motivo = data.get('motivo')
-        if motivo == 'Otros motivos':
-            motivo = datos.get('motivo', 'Otros motivos')
-        
-        # Formatear fecha para mostrar
-        fecha_obj = datetime.strptime(data.get('fecha'), '%Y-%m-%d')
-        fecha_formateada = fecha_obj.strftime('%d/%m/%Y')
-        
-        # Datos de confirmación
-        confirmation_data = {
-            'nombre': datos['nombre'],
-            'email': datos['email'],
-            'telefono': datos['telefono'],
-            'motivo': motivo,
-            'fecha': fecha_formateada,
-            'hora': data.get('hora')
-        }
-        
-        return jsonify({
-            'type': 'confirmation',
-            'title': '✅ Confirma tu cita',
-            'message': 'Revisa los datos de tu cita antes de confirmar:',
-            'confirmation_data': confirmation_data,
-            'datos_paciente': datos,
-            'motivo': motivo,
-            'fecha': data.get('fecha'),
-            'hora': data.get('hora'),
-            'options': [
-                {'id': 'guardar_cita', 'text': '✅ Confirmar cita', 'icon': '✅'},
-                {'id': 'volver_hora', 'text': '🔙 Volver', 'icon': '🔙'}
-            ]
-        })
-    
-    elif action == 'guardar_cita':
-        # Guardar cita en la base de datos
-        datos = data.get('datos_paciente')
-        motivo = data.get('motivo')
-        if motivo == 'Otros motivos':
-            motivo = datos.get('motivo', 'Otros motivos')
-        
-        conn = sqlite3.connect(DATABASE)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            INSERT INTO citas (nombre, email, telefono, motivo, fecha, hora)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (datos['nombre'], datos['email'], datos['telefono'], 
-              motivo, data.get('fecha'), data.get('hora')))
-        conn.commit()
-        conn.close()
-        
-        return jsonify({
-            'type': 'success',
-            'title': '✅ ¡Cita agendada con éxito!',
-            'message': f'''<strong>Resumen de tu cita:</strong><br>
+        elif action == 'guardar_cita':
+            try:
+                # Guardar cita en la base de datos
+                datos = data.get('datos_paciente')
+                motivo = data.get('motivo')
+                if motivo == 'Otros motivos':
+                    motivo = datos.get('motivo', 'Otros motivos')
+                
+                # Asegurar que la base de datos esté inicializada
+                init_database()
+                
+                conn = sqlite3.connect(DATABASE)
+                cursor = conn.cursor()
+                
+                cursor.execute('''
+                    INSERT INTO citas (nombre, email, telefono, motivo, fecha, hora)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (datos['nombre'], datos['email'], datos['telefono'], 
+                      motivo, data.get('fecha'), data.get('hora')))
+                conn.commit()
+                conn.close()
+                
+                # Formatear fecha para mostrar en formato dd/mm/aaaa
+                fecha_obj = datetime.strptime(data.get('fecha'), '%Y-%m-%d')
+                fecha_formateada = fecha_obj.strftime('%d/%m/%Y')
+                
+                return jsonify({
+                    'type': 'success',
+                    'title': '✅ ¡Cita agendada con éxito!',
+                    'message': f'''<strong>Resumen de tu cita:</strong><br>
 👤 Paciente: {datos['nombre']}<br>
 📧 Email: {datos['email']}<br>
 📞 Teléfono: {datos['telefono']}<br>
 📝 Motivo: {motivo}<br>
-📅 Fecha: {data.get('fecha')}<br>
+📅 Fecha: {fecha_formateada}<br>
 🕐 Hora: {data.get('hora')}<br><br>
 📧 Recibirás un email de confirmación.<br>
 📞 Te llamaremos para confirmar la cita.''',
+                    'options': [
+                        {'id': 'menu_principal', 'text': '🏠 Volver al menú principal', 'icon': '🏠'}
+                    ]
+                })
+            except Exception as e:
+                print(f"Error al guardar cita: {str(e)}")
+                return jsonify({
+                    'type': 'error',
+                    'title': '❌ Error al agendar cita',
+                    'message': 'Ha ocurrido un error al guardar tu cita. Por favor, inténtalo de nuevo.',
+                    'options': [
+                        {'id': 'menu_principal', 'text': '🏠 Volver al menú principal', 'icon': '🏠'}
+                    ]
+                })
+        
+        elif action == 'ubicaciones':
+            content = ''
+            for ubicacion in UBICACIONES:
+                content += f'''
+                <div class="ubicacion-item">
+                    <h4>🏥 {ubicacion["nombre"]}</h4>
+                    <p>📍 {ubicacion["direccion"]}</p>
+                    <p>📞 {ubicacion["telefono"]}</p>
+                    <p>🕐 {ubicacion["horarios"]}</p>
+                </div>
+                '''
+            
+            return jsonify({
+                'type': 'detail',
+                'title': '📍 UBICACIONES DE NUESTRAS CLÍNICAS',
+                'content': {'html': content},
+                'options': [
+                    {'id': 'volver', 'text': '🔙 Volver al menú principal', 'icon': '🔙'}
+                ]
+            })
+        
+        elif action == 'financiacion':
+            content = '''
+            <div class="financiacion-content">
+                <h4>💳 OPCIONES DE PAGO:</h4>
+                <ul>
+                    <li>Pago en efectivo (5% descuento)</li>
+                    <li>Pago con tarjeta (sin recargo)</li>
+                    <li>Financiación a 6 meses (sin intereses)</li>
+                    <li>Financiación a 12 meses (5% intereses)</li>
+                    <li>Financiación a 24 meses (8% intereses)</li>
+                </ul>
+                
+                <h4>📋 CONDICIONES:</h4>
+                <ul>
+                    <li>Requisito: DNI y justificante de ingresos</li>
+                    <li>Aprobación inmediata para montos hasta 1.000€</li>
+                    <li>Para montos superiores: aprobación en 24-48h</li>
+                    <li>Sin comisión de apertura</li>
+                    <li>Posibilidad de pago anticipado sin penalización</li>
+                </ul>
+                
+                <h4>❓ PREGUNTAS FRECUENTES:</h4>
+                <ul>
+                    <li>¿Necesito aval? No para montos hasta 2.000€</li>
+                    <li>¿Puedo pagar antes? Sí, sin penalización</li>
+                    <li>¿Hay comisiones ocultas? No, todo transparente</li>
+                </ul>
+            </div>
+            '''
+            
+            return jsonify({
+                'type': 'detail',
+                'title': '💰 INFORMACIÓN DE FINANCIACIÓN',
+                'content': {'html': content},
+                'options': [
+                    {'id': 'volver', 'text': '🔙 Volver al menú principal', 'icon': '🔙'}
+                ]
+            })
+        
+        elif action == 'volver':
+            return jsonify({
+                'type': 'menu',
+                'title': '👋 ¡Bienvenido a nuestra clínica dental!',
+                'message': 'Selecciona una opción:',
+                'options': [
+                    {'id': 'tratamientos', 'text': ' Información de tratamientos', 'icon': '🦷'},
+                    {'id': 'agendar', 'text': ' Agenda tu cita', 'icon': '📅'},
+                    {'id': 'ubicaciones', 'text': ' Ubicaciones', 'icon': '📍'},
+                    {'id': 'financiacion', 'text': ' Información de financiación', 'icon': '💰'}
+                ]
+            })
+        
+        return jsonify({'error': 'Acción no reconocida'})
+        
+    except Exception as e:
+        print(f"Error en chat API: {str(e)}")
+        return jsonify({
+            'type': 'error',
+            'title': '❌ Error del servidor',
+            'message': 'Ha ocurrido un error inesperado. Por favor, inténtalo de nuevo.',
             'options': [
                 {'id': 'menu_principal', 'text': '🏠 Volver al menú principal', 'icon': '🏠'}
             ]
         })
-    
-    elif action == 'ubicaciones':
-        content = ''
-        for ubicacion in UBICACIONES:
-            content += f'''
-            <div class="ubicacion-item">
-                <h4>🏥 {ubicacion["nombre"]}</h4>
-                <p>📍 {ubicacion["direccion"]}</p>
-                <p>📞 {ubicacion["telefono"]}</p>
-                <p>🕐 {ubicacion["horarios"]}</p>
-            </div>
-            '''
-        
-        return jsonify({
-            'type': 'detail',
-            'title': '📍 UBICACIONES DE NUESTRAS CLÍNICAS',
-            'content': {'html': content},
-            'options': [
-                {'id': 'volver', 'text': '🔙 Volver al menú principal', 'icon': '🔙'}
-            ]
-        })
-    
-    elif action == 'financiacion':
-        content = '''
-        <div class="financiacion-content">
-            <h4>💳 OPCIONES DE PAGO:</h4>
-            <ul>
-                <li>Pago en efectivo (5% descuento)</li>
-                <li>Pago con tarjeta (sin recargo)</li>
-                <li>Financiación a 6 meses (sin intereses)</li>
-                <li>Financiación a 12 meses (5% intereses)</li>
-                <li>Financiación a 24 meses (8% intereses)</li>
-            </ul>
-            
-            <h4>📋 CONDICIONES:</h4>
-            <ul>
-                <li>Requisito: DNI y justificante de ingresos</li>
-                <li>Aprobación inmediata para montos hasta 1.000€</li>
-                <li>Para montos superiores: aprobación en 24-48h</li>
-                <li>Sin comisión de apertura</li>
-                <li>Posibilidad de pago anticipado sin penalización</li>
-            </ul>
-            
-            <h4>❓ PREGUNTAS FRECUENTES:</h4>
-            <ul>
-                <li>¿Necesito aval? No para montos hasta 2.000€</li>
-                <li>¿Puedo pagar antes? Sí, sin penalización</li>
-                <li>¿Hay comisiones ocultas? No, todo transparente</li>
-            </ul>
-        </div>
-        '''
-        
-        return jsonify({
-            'type': 'detail',
-            'title': '💰 INFORMACIÓN DE FINANCIACIÓN',
-            'content': {'html': content},
-            'options': [
-                {'id': 'volver', 'text': '🔙 Volver al menú principal', 'icon': '🔙'}
-            ]
-        })
-    
-    elif action == 'volver':
-        return jsonify({
-            'type': 'menu',
-            'title': '👋 ¡Bienvenido a nuestra clínica dental!',
-            'message': 'Selecciona una opción:',
-            'options': [
-                {'id': 'tratamientos', 'text': '📋 Información de tratamientos', 'icon': '🦷'},
-                {'id': 'agendar', 'text': '📅 Agenda tu cita', 'icon': '📅'},
-                {'id': 'ubicaciones', 'text': '📍 Ubicaciones', 'icon': '📍'},
-                {'id': 'financiacion', 'text': '💰 Información de financiación', 'icon': '💰'}
-            ]
-        })
-    
-    return jsonify({'error': 'Acción no reconocida'})
 
 if __name__ == '__main__':
     # Configuración para desarrollo local
