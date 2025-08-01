@@ -498,6 +498,163 @@ def chat():
             ]
         })
 
+# Rutas para el panel de control
+@app.route('/panel')
+def panel():
+    """Panel de control para empleados"""
+    return render_template('panel.html')
+
+@app.route('/api/citas', methods=['GET'])
+def get_citas():
+    """API para obtener citas con filtros"""
+    try:
+        fecha_inicio = request.args.get('fecha_inicio')
+        fecha_fin = request.args.get('fecha_fin')
+        estado = request.args.get('estado', 'todos')
+        
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        
+        query = 'SELECT * FROM citas WHERE 1=1'
+        params = []
+        
+        if fecha_inicio:
+            query += ' AND fecha >= ?'
+            params.append(fecha_inicio)
+        
+        if fecha_fin:
+            query += ' AND fecha <= ?'
+            params.append(fecha_fin)
+        
+        if estado != 'todos':
+            query += ' AND estado = ?'
+            params.append(estado)
+        
+        query += ' ORDER BY fecha, hora'
+        
+        cursor.execute(query, params)
+        citas = cursor.fetchall()
+        
+        # Convertir a formato JSON
+        citas_json = []
+        for cita in citas:
+            citas_json.append({
+                'id': cita[0],
+                'nombre': cita[1],
+                'email': cita[2],
+                'telefono': cita[3],
+                'motivo': cita[4],
+                'fecha': cita[5],
+                'hora': cita[6],
+                'estado': cita[7]
+            })
+        
+        conn.close()
+        return jsonify(citas_json)
+        
+    except Exception as e:
+        print(f"Error al obtener citas: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/cita/<int:cita_id>', methods=['PUT'])
+def update_cita(cita_id):
+    """API para actualizar el estado de una cita"""
+    try:
+        data = request.get_json()
+        nuevo_estado = data.get('estado')
+        
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        
+        cursor.execute('UPDATE citas SET estado = ? WHERE id = ?', (nuevo_estado, cita_id))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Cita actualizada correctamente'})
+        
+    except Exception as e:
+        print(f"Error al actualizar cita: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/cita/<int:cita_id>', methods=['DELETE'])
+def delete_cita(cita_id):
+    """API para eliminar una cita"""
+    try:
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        
+        cursor.execute('DELETE FROM citas WHERE id = ?', (cita_id,))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Cita eliminada correctamente'})
+        
+    except Exception as e:
+        print(f"Error al eliminar cita: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/estadisticas', methods=['GET'])
+def get_estadisticas():
+    """API para obtener estadísticas del panel"""
+    try:
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        
+        # Total de citas
+        cursor.execute('SELECT COUNT(*) FROM citas')
+        total_citas = cursor.fetchone()[0]
+        
+        # Citas pendientes
+        cursor.execute('SELECT COUNT(*) FROM citas WHERE estado = "pendiente"')
+        citas_pendientes = cursor.fetchone()[0]
+        
+        # Citas confirmadas
+        cursor.execute('SELECT COUNT(*) FROM citas WHERE estado = "confirmada"')
+        citas_confirmadas = cursor.fetchone()[0]
+        
+        # Citas completadas
+        cursor.execute('SELECT COUNT(*) FROM citas WHERE estado = "completada"')
+        citas_completadas = cursor.fetchone()[0]
+        
+        # Citas canceladas
+        cursor.execute('SELECT COUNT(*) FROM citas WHERE estado = "cancelada"')
+        citas_canceladas = cursor.fetchone()[0]
+        
+        # Citas por día de la semana
+        cursor.execute('''
+            SELECT strftime('%w', fecha) as dia_semana, COUNT(*) 
+            FROM citas 
+            WHERE fecha >= date('now', '-30 days')
+            GROUP BY dia_semana
+            ORDER BY dia_semana
+        ''')
+        citas_por_dia = cursor.fetchall()
+        
+        # Citas por tratamiento
+        cursor.execute('''
+            SELECT motivo, COUNT(*) 
+            FROM citas 
+            GROUP BY motivo
+            ORDER BY COUNT(*) DESC
+        ''')
+        citas_por_tratamiento = cursor.fetchall()
+        
+        conn.close()
+        
+        return jsonify({
+            'total_citas': total_citas,
+            'citas_pendientes': citas_pendientes,
+            'citas_confirmadas': citas_confirmadas,
+            'citas_completadas': citas_completadas,
+            'citas_canceladas': citas_canceladas,
+            'citas_por_dia': citas_por_dia,
+            'citas_por_tratamiento': citas_por_tratamiento
+        })
+        
+    except Exception as e:
+        print(f"Error al obtener estadísticas: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     # Configuración para desarrollo local
     app.run(debug=True, port=5001, host='0.0.0.0') 

@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control - Clínica Dental</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --light-bg: #f8fafc;
+            --dark-bg: #1e293b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .panel-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .stat-card .label {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .calendar-section, .citas-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .section-header h3 {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .calendar-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn-calendar {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .btn-calendar:hover {
+            background: var(--secondary-color);
+        }
+
+        .btn-calendar.active {
+            background: var(--success-color);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .calendar-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+
+        .calendar-day {
+            background: #f8fafc;
+            padding: 15px 10px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            min-height: 80px;
+        }
+
+        .calendar-day:hover {
+            background: #e2e8f0;
+        }
+
+        .calendar-day.today {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .calendar-day.has-citas {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .cita-indicator {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 8px;
+            height: 8px;
+            background: var(--danger-color);
+            border-radius: 50%;
+        }
+
+        .citas-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .cita-item {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .cita-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .cita-nombre {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .cita-estado {
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .estado-pendiente { background: #fef3c7; color: #92400e; }
+        .estado-confirmada { background: #d1fae5; color: #065f46; }
+        .estado-completada { background: #dbeafe; color: #1e40af; }
+        .estado-cancelada { background: #fee2e2; color: #991b1b; }
+
+        .cita-details {
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        .cita-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .btn-action {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-confirm { background: var(--success-color); color: white; }
+        .btn-complete { background: var(--primary-color); color: white; }
+        .btn-cancel { background: var(--danger-color); color: white; }
+        .btn-delete { background: #6b7280; color: white; }
+
+        .filters-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .charts-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .chart-container {
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .calendar-grid {
+                grid-template-columns: repeat(7, 1fr);
+                font-size: 0.8rem;
+            }
+            
+            .calendar-day {
+                padding: 10px 5px;
+                min-height: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="panel-container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-tooth"></i> Panel de Control - Clínica Dental</h1>
+            <p class="text-muted">Gestión de citas y estadísticas para empleados</p>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="icon text-primary"><i class="fas fa-calendar-check"></i></div>
+                <div class="number" id="totalCitas">-</div>
+                <div class="label">Total Citas</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon text-warning"><i class="fas fa-clock"></i></div>
+                <div class="number" id="citasPendientes">-</div>
+                <div class="label">Pendientes</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon text-success"><i class="fas fa-check-circle"></i></div>
+                <div class="number" id="citasConfirmadas">-</div>
+                <div class="label">Confirmadas</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon text-info"><i class="fas fa-check-double"></i></div>
+                <div class="number" id="citasCompletadas">-</div>
+                <div class="label">Completadas</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon text-danger"><i class="fas fa-times-circle"></i></div>
+                <div class="number" id="citasCanceladas">-</div>
+                <div class="label">Canceladas</div>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filters-section">
+            <div class="section-header">
+                <h3><i class="fas fa-filter"></i> Filtros de Búsqueda</h3>
+            </div>
+            <div class="filters-grid">
+                <div class="form-group">
+                    <label>Fecha Inicio</label>
+                    <input type="date" class="form-control" id="fechaInicio">
+                </div>
+                <div class="form-group">
+                    <label>Fecha Fin</label>
+                    <input type="date" class="form-control" id="fechaFin">
+                </div>
+                <div class="form-group">
+                    <label>Estado</label>
+                    <select class="form-control" id="estadoFiltro">
+                        <option value="todos">Todos los estados</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="confirmada">Confirmada</option>
+                        <option value="completada">Completada</option>
+                        <option value="cancelada">Cancelada</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-primary w-100" onclick="aplicarFiltros()">
+                        <i class="fas fa-search"></i> Aplicar Filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenido Principal -->
+        <div class="main-content">
+            <!-- Calendario -->
+            <div class="calendar-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-calendar-alt"></i> Calendario de Citas</h3>
+                    <div class="calendar-controls">
+                        <button class="btn-calendar" onclick="cambiarVista('dia')">Día</button>
+                        <button class="btn-calendar active" onclick="cambiarVista('semana')">Semana</button>
+                        <button class="btn-calendar" onclick="cambiarVista('mes')">Mes</button>
+                    </div>
+                </div>
+                <div id="calendarContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Cargando calendario...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Citas -->
+            <div class="citas-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-list"></i> Lista de Citas</h3>
+                    <button class="btn btn-success btn-sm" onclick="exportarCitas()">
+                        <i class="fas fa-download"></i> Exportar
+                    </button>
+                </div>
+                <div id="citasList">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Cargando citas...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="charts-section">
+            <div class="section-header">
+                <h3><i class="fas fa-chart-bar"></i> Estadísticas y Gráficos</h3>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Citas por Día de la Semana</h5>
+                    <div class="chart-container" id="chartDias"></div>
+                </div>
+                <div class="col-md-6">
+                    <h5>Citas por Tratamiento</h5>
+                    <div class="chart-container" id="chartTratamientos"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para detalles de cita -->
+    <div class="modal fade" id="citaModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalles de la Cita</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <!-- Contenido dinámico -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let vistaActual = 'semana';
+        let fechaActual = new Date();
+        let citas = [];
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarEstadisticas();
+            cargarCitas();
+            generarCalendario();
+        });
+
+        // Cargar estadísticas
+        async function cargarEstadisticas() {
+            try {
+                const response = await fetch('/api/estadisticas');
+                const data = await response.json();
+                
+                document.getElementById('totalCitas').textContent = data.total_citas;
+                document.getElementById('citasPendientes').textContent = data.citas_pendientes;
+                document.getElementById('citasConfirmadas').textContent = data.citas_confirmadas;
+                document.getElementById('citasCompletadas').textContent = data.citas_completadas;
+                document.getElementById('citasCanceladas').textContent = data.citas_canceladas;
+                
+                generarGraficos(data);
+            } catch (error) {
+                console.error('Error cargando estadísticas:', error);
+            }
+        }
+
+        // Cargar citas
+        async function cargarCitas(filtros = {}) {
+            try {
+                const params = new URLSearchParams(filtros);
+                const response = await fetch(`/api/citas?${params}`);
+                citas = await response.json();
+                
+                mostrarCitas();
+                generarCalendario();
+            } catch (error) {
+                console.error('Error cargando citas:', error);
+            }
+        }
+
+        // Mostrar citas en la lista
+        function mostrarCitas() {
+            const container = document.getElementById('citasList');
+            
+            if (citas.length === 0) {
+                container.innerHTML = '<p class="text-center text-muted">No hay citas que mostrar</p>';
+                return;
+            }
+
+            container.innerHTML = citas.map(cita => `
+                <div class="cita-item">
+                    <div class="cita-header">
+                        <span class="cita-nombre">${cita.nombre}</span>
+                        <span class="cita-estado estado-${cita.estado}">${cita.estado}</span>
+                    </div>
+                    <div class="cita-details">
+                        <div><i class="fas fa-calendar"></i> ${cita.fecha} - ${cita.hora}</div>
+                        <div><i class="fas fa-phone"></i> ${cita.telefono}</div>
+                        <div><i class="fas fa-envelope"></i> ${cita.email}</div>
+                        <div><i class="fas fa-stethoscope"></i> ${cita.motivo}</div>
+                    </div>
+                    <div class="cita-actions">
+                        ${cita.estado === 'pendiente' ? 
+                            `<button class="btn-action btn-confirm" onclick="cambiarEstado(${cita.id}, 'confirmada')">
+                                <i class="fas fa-check"></i> Confirmar
+                            </button>` : ''
+                        }
+                        ${cita.estado === 'confirmada' ? 
+                            `<button class="btn-action btn-complete" onclick="cambiarEstado(${cita.id}, 'completada')">
+                                <i class="fas fa-check-double"></i> Completar
+                            </button>` : ''
+                        }
+                        ${cita.estado !== 'cancelada' && cita.estado !== 'completada' ? 
+                            `<button class="btn-action btn-cancel" onclick="cambiarEstado(${cita.id}, 'cancelada')">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>` : ''
+                        }
+                        <button class="btn-action btn-delete" onclick="eliminarCita(${cita.id})">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Cambiar estado de cita
+        async function cambiarEstado(citaId, nuevoEstado) {
+            try {
+                const response = await fetch(`/api/cita/${citaId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ estado: nuevoEstado })
+                });
+                
+                if (response.ok) {
+                    cargarCitas();
+                    cargarEstadisticas();
+                }
+            } catch (error) {
+                console.error('Error cambiando estado:', error);
+            }
+        }
+
+        // Eliminar cita
+        async function eliminarCita(citaId) {
+            if (!confirm('¿Estás seguro de que quieres eliminar esta cita?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/cita/${citaId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    cargarCitas();
+                    cargarEstadisticas();
+                }
+            } catch (error) {
+                console.error('Error eliminando cita:', error);
+            }
+        }
+
+        // Aplicar filtros
+        function aplicarFiltros() {
+            const filtros = {};
+            
+            const fechaInicio = document.getElementById('fechaInicio').value;
+            const fechaFin = document.getElementById('fechaFin').value;
+            const estado = document.getElementById('estadoFiltro').value;
+            
+            if (fechaInicio) filtros.fecha_inicio = fechaInicio;
+            if (fechaFin) filtros.fecha_fin = fechaFin;
+            if (estado !== 'todos') filtros.estado = estado;
+            
+            cargarCitas(filtros);
+        }
+
+        // Cambiar vista del calendario
+        function cambiarVista(vista) {
+            vistaActual = vista;
+            
+            // Actualizar botones
+            document.querySelectorAll('.btn-calendar').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            generarCalendario();
+        }
+
+        // Generar calendario
+        function generarCalendario() {
+            const container = document.getElementById('calendarContainer');
+            
+            if (vistaActual === 'dia') {
+                generarVistaDia();
+            } else if (vistaActual === 'semana') {
+                generarVistaSemana();
+            } else {
+                generarVistaMes();
+            }
+        }
+
+        // Vista de día
+        function generarVistaDia() {
+            const container = document.getElementById('calendarContainer');
+            const fecha = fechaActual.toISOString().split('T')[0];
+            const citasDelDia = citas.filter(cita => cita.fecha === fecha);
+            
+            container.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <button class="btn btn-outline-primary" onclick="cambiarFecha(-1)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <h5>${fechaActual.toLocaleDateString('es-ES', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    })}</h5>
+                    <button class="btn btn-outline-primary" onclick="cambiarFecha(1)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="citas-list">
+                    ${citasDelDia.length === 0 ? 
+                        '<p class="text-center text-muted">No hay citas para este día</p>' :
+                        citasDelDia.map(cita => `
+                            <div class="cita-item">
+                                <div class="cita-header">
+                                    <span class="cita-nombre">${cita.nombre}</span>
+                                    <span class="cita-estado estado-${cita.estado}">${cita.estado}</span>
+                                </div>
+                                <div class="cita-details">
+                                    <div><i class="fas fa-clock"></i> ${cita.hora}</div>
+                                    <div><i class="fas fa-phone"></i> ${cita.telefono}</div>
+                                    <div><i class="fas fa-stethoscope"></i> ${cita.motivo}</div>
+                                </div>
+                            </div>
+                        `).join('')
+                    }
+                </div>
+            `;
+        }
+
+        // Vista de semana
+        function generarVistaSemana() {
+            const container = document.getElementById('calendarContainer');
+            const inicioSemana = new Date(fechaActual);
+            const diaSemana = fechaActual.getDay();
+            // Ajustar para que lunes sea el primer día (0=domingo, 1=lunes, etc.)
+            const diasDesdeLunes = diaSemana === 0 ? 6 : diaSemana - 1;
+            inicioSemana.setDate(fechaActual.getDate() - diasDesdeLunes);
+            
+            const diasSemana = [];
+            for (let i = 0; i < 7; i++) {
+                const dia = new Date(inicioSemana);
+                dia.setDate(inicioSemana.getDate() + i);
+                diasSemana.push(dia);
+            }
+            
+            const nombresDias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+            
+            container.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <button class="btn btn-outline-primary" onclick="cambiarFecha(-7)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <h5>Semana del ${inicioSemana.toLocaleDateString('es-ES')}</h5>
+                    <button class="btn btn-outline-primary" onclick="cambiarFecha(7)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="calendar-grid">
+                    ${nombresDias.map(nombre => `<div class="calendar-header">${nombre}</div>`).join('')}
+                    ${diasSemana.map(dia => {
+                        // Crear la fecha string correctamente sin problemas de zona horaria
+                        const fechaStr = `${dia.getFullYear()}-${String(dia.getMonth() + 1).padStart(2, '0')}-${String(dia.getDate()).padStart(2, '0')}`;
+                        const citasDelDia = citas.filter(cita => cita.fecha === fechaStr);
+                        const esHoy = dia.toDateString() === new Date().toDateString();
+                        
+                        return `
+                            <div class="calendar-day ${esHoy ? 'today' : ''} ${citasDelDia.length > 0 ? 'has-citas' : ''}" 
+                                 onclick="seleccionarFecha('${fechaStr}')">
+                                <div>${dia.getDate()}</div>
+                                ${citasDelDia.length > 0 ? `<div class="cita-indicator"></div>` : ''}
+                                <small>${citasDelDia.length} cita${citasDelDia.length !== 1 ? 's' : ''}</small>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        // Vista de mes
+        function generarVistaMes() {
+            const container = document.getElementById('calendarContainer');
+            const primerDiaMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth(), 1);
+            const ultimoDiaMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 0);
+            const primerDiaSemana = primerDiaMes.getDay();
+            
+            // Calcular espacios en blanco para que el calendario empiece en lunes
+            // 0=domingo, 1=lunes, 2=martes, etc.
+            let espaciosBlanco;
+            if (primerDiaSemana === 0) { // Domingo
+                espaciosBlanco = 6; // 6 espacios para llegar al lunes
+            } else {
+                espaciosBlanco = primerDiaSemana - 1; // Restar 1 porque lunes es el primer día
+            }
+            
+            // Asegurar que no sea negativo
+            if (espaciosBlanco < 0) espaciosBlanco = 0;
+            
+            container.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <button class="btn btn-outline-primary" onclick="cambiarFecha(-30)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <h5>${fechaActual.toLocaleDateString('es-ES', { 
+                        year: 'numeric', 
+                        month: 'long' 
+                    })}</h5>
+                    <button class="btn btn-outline-primary" onclick="cambiarFecha(30)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="calendar-grid">
+                    ${['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(dia => 
+                        `<div class="calendar-header">${dia}</div>`
+                    ).join('')}
+                    ${Array.from({length: espaciosBlanco}, () => 
+                        `<div class="calendar-day"></div>`
+                    ).join('')}
+                    ${Array.from({length: ultimoDiaMes.getDate()}, (_, i) => {
+                        const dia = i + 1;
+                        const fecha = new Date(fechaActual.getFullYear(), fechaActual.getMonth(), dia);
+                        // Crear la fecha string correctamente sin problemas de zona horaria
+                        const fechaStr = `${fechaActual.getFullYear()}-${String(fechaActual.getMonth() + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+                        const citasDelDia = citas.filter(cita => cita.fecha === fechaStr);
+                        const esHoy = fecha.toDateString() === new Date().toDateString();
+                        
+                        return `
+                            <div class="calendar-day ${esHoy ? 'today' : ''} ${citasDelDia.length > 0 ? 'has-citas' : ''}" 
+                                 onclick="seleccionarFecha('${fechaStr}')">
+                                <div>${dia}</div>
+                                ${citasDelDia.length > 0 ? `<div class="cita-indicator"></div>` : ''}
+                                <small>${citasDelDia.length} cita${citasDelDia.length !== 1 ? 's' : ''}</small>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        // Cambiar fecha
+        function cambiarFecha(dias) {
+            fechaActual.setDate(fechaActual.getDate() + dias);
+            generarCalendario();
+        }
+
+        // Seleccionar fecha
+        function seleccionarFecha(fecha) {
+            // Crear la fecha correctamente para evitar problemas de zona horaria
+            const [year, month, day] = fecha.split('-').map(Number);
+            fechaActual = new Date(year, month - 1, day); // month - 1 porque los meses van de 0-11
+            cambiarVista('dia');
+        }
+
+        // Generar gráficos
+        function generarGraficos(data) {
+            // Gráfico de citas por día de la semana
+            const ctxDias = document.getElementById('chartDias');
+            if (ctxDias) {
+                new Chart(ctxDias, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
+                        datasets: [{
+                            label: 'Citas',
+                            data: data.citas_por_dia.map(item => item[1]),
+                            backgroundColor: 'rgba(37, 99, 235, 0.8)',
+                            borderColor: 'rgba(37, 99, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Gráfico de citas por tratamiento
+            const ctxTratamientos = document.getElementById('chartTratamientos');
+            if (ctxTratamientos) {
+                new Chart(ctxTratamientos, {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.citas_por_tratamiento.map(item => item[0]),
+                        datasets: [{
+                            data: data.citas_por_tratamiento.map(item => item[1]),
+                            backgroundColor: [
+                                'rgba(37, 99, 235, 0.8)',
+                                'rgba(16, 185, 129, 0.8)',
+                                'rgba(245, 158, 11, 0.8)',
+                                'rgba(239, 68, 68, 0.8)',
+                                'rgba(139, 92, 246, 0.8)'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+        }
+
+        // Exportar citas
+        function exportarCitas() {
+            const csvContent = "data:text/csv;charset=utf-8," 
+                + "ID,Nombre,Email,Teléfono,Motivo,Fecha,Hora,Estado\n"
+                + citas.map(cita => 
+                    `${cita.id},${cita.nombre},${cita.email},${cita.telefono},${cita.motivo},${cita.fecha},${cita.hora},${cita.estado}`
+                ).join("\n");
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `citas_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html> 
