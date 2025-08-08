@@ -147,7 +147,12 @@ UBICACIONES = [
 
 @app.route('/')
 def index():
-    """Página principal con el chatbot"""
+    """Página de entrada principal"""
+    return render_template('index.html')
+
+@app.route('/chatbot')
+def chatbot():
+    """Página del chatbot"""
     init_database()
     return render_template('chatbot.html')
 
@@ -328,10 +333,14 @@ def chat():
             print(f"Horas ocupadas: {citas_ocupadas}")
             print(f"Horas disponibles: {available_times}")
             
+            # Formatear fecha para mostrar en formato dd/mm/aaaa
+            fecha_obj = datetime.strptime(data.get('fecha'), '%Y-%m-%d')
+            fecha_formateada = fecha_obj.strftime('%d/%m/%Y')
+            
             return jsonify({
                 'type': 'time_selector',
                 'title': '🕐 Selecciona una hora',
-                'message': f'Elige la hora que prefieres para el {data.get("fecha")}:',
+                'message': f'Elige la hora que prefieres para el {fecha_formateada}:',
                 'available_times': available_times,
                 'occupied_times': citas_ocupadas,
                 'datos_paciente': data.get('datos_paciente'),
@@ -522,6 +531,11 @@ def panel():
     """Panel de control para empleados"""
     return render_template('panel.html')
 
+@app.route('/citas')
+def citas_lista():
+    """Página de listado de citas"""
+    return render_template('citas_lista.html')
+
 @app.route('/api/citas', methods=['GET'])
 def get_citas():
     """API para obtener citas con filtros"""
@@ -609,6 +623,69 @@ def delete_cita(cita_id):
         
     except Exception as e:
         print(f"Error al eliminar cita: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/crear-cita', methods=['POST'])
+def crear_cita():
+    """API para crear una nueva cita desde el panel"""
+    try:
+        data = request.get_json()
+        
+        # Validar datos requeridos
+        campos_requeridos = ['nombre', 'email', 'telefono', 'motivo', 'fecha', 'hora']
+        for campo in campos_requeridos:
+            if not data.get(campo):
+                return jsonify({'error': f'El campo {campo} es requerido'}), 400
+        
+        # Validar formato de email
+        import re
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", data['email']):
+            return jsonify({'error': 'Formato de email inválido'}), 400
+        
+        # Validar que la fecha no sea anterior a hoy
+        from datetime import datetime, date
+        fecha_cita = datetime.strptime(data['fecha'], '%Y-%m-%d').date()
+        if fecha_cita < date.today():
+            return jsonify({'error': 'No se pueden crear citas en fechas pasadas'}), 400
+        
+        # Verificar disponibilidad de hora
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT COUNT(*) FROM citas WHERE fecha = ? AND hora = ? AND estado != "cancelada"', 
+                      (data['fecha'], data['hora']))
+        citas_existentes = cursor.fetchone()[0]
+        
+        if citas_existentes > 0:
+            conn.close()
+            return jsonify({'error': 'Ya existe una cita en esa fecha y hora'}), 400
+        
+        # Crear la cita
+        estado = data.get('estado', 'pendiente')
+        descripcion = data.get('descripcion', '')
+        
+        # Si hay descripción, añadirla al motivo
+        motivo_final = data['motivo']
+        if descripcion:
+            motivo_final += f" - {descripcion}"
+        
+        cursor.execute('''
+            INSERT INTO citas (nombre, email, telefono, motivo, fecha, hora, estado)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (data['nombre'], data['email'], data['telefono'], motivo_final, 
+              data['fecha'], data['hora'], estado))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Cita creada exitosamente',
+            'cita_id': cursor.lastrowid
+        })
+        
+    except Exception as e:
+        print(f"Error al crear cita: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/estadisticas', methods=['GET'])

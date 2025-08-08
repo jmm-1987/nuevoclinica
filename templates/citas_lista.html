@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listado de Citas - Clínica Dental</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --light-bg: #f8fafc;
+            --dark-bg: #1e293b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container-fluid {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .filters-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .citas-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .section-header h3 {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .cita-item {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .cita-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .cita-nombre {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .cita-estado {
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .estado-pendiente { background: #fef3c7; color: #92400e; }
+        .estado-confirmada { background: #d1fae5; color: #065f46; }
+        .estado-completada { background: #dbeafe; color: #1e40af; }
+        .estado-cancelada { background: #fee2e2; color: #991b1b; }
+
+        .cita-details {
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        .cita-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .btn-action {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-confirm { background: var(--success-color); color: white; }
+        .btn-complete { background: var(--primary-color); color: white; }
+        .btn-cancel { background: var(--danger-color); color: white; }
+        .btn-delete { background: #6b7280; color: white; }
+
+        .btn-whatsapp { 
+            background: #25D366; 
+            color: white; 
+            border: none;
+            padding: 6px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 5px;
+        }
+
+        .btn-email { 
+            background: #007bff; 
+            color: white; 
+            border: none;
+            padding: 6px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 5px;
+        }
+
+        .btn-whatsapp:hover { background: #128C7E; }
+        .btn-email:hover { background: #0056b3; }
+
+        .contact-buttons {
+            display: flex;
+            gap: 5px;
+            margin-top: 8px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .no-citas {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+
+        .no-citas i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #cbd5e1;
+        }
+
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding: 10px;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+            }
+            
+            .cita-actions {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1><i class="fas fa-list"></i> Listado de Citas</h1>
+                    <p class="text-muted mb-0">Gestiona todas las citas de la clínica</p>
+                </div>
+                <div>
+                    <a href="/panel" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-calendar"></i> Calendario
+                    </a>
+                    <button class="btn btn-primary" onclick="abrirModalNuevaCita()">
+                        <i class="fas fa-plus"></i> Nueva Cita
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filters-section">
+            <div class="section-header">
+                <h3><i class="fas fa-filter"></i> Filtros</h3>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="fechaInicio" class="form-label">Fecha Inicio</label>
+                    <input type="date" class="form-control" id="fechaInicio">
+                </div>
+                <div class="col-md-3">
+                    <label for="fechaFin" class="form-label">Fecha Fin</label>
+                    <input type="date" class="form-control" id="fechaFin">
+                </div>
+                <div class="col-md-3">
+                    <label for="estadoFiltro" class="form-label">Estado</label>
+                    <select class="form-select" id="estadoFiltro">
+                        <option value="todos">Todos los estados</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="confirmada">Confirmada</option>
+                        <option value="completada">Completada</option>
+                        <option value="cancelada">Cancelada</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <div>
+                        <button class="btn btn-primary" onclick="aplicarFiltros()">
+                            <i class="fas fa-search"></i> Filtrar
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="limpiarFiltros()">
+                            <i class="fas fa-times"></i> Limpiar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumen de estadísticas -->
+        <div class="stats-summary" id="statsSummary">
+            <div class="stat-item">
+                <div class="stat-number" id="totalCitas">0</div>
+                <div class="stat-label">Total Citas</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="citasPendientes">0</div>
+                <div class="stat-label">Pendientes</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="citasConfirmadas">0</div>
+                <div class="stat-label">Confirmadas</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="citasCompletadas">0</div>
+                <div class="stat-label">Completadas</div>
+            </div>
+        </div>
+
+        <!-- Lista de Citas -->
+        <div class="citas-section">
+            <div class="section-header">
+                <h3><i class="fas fa-list"></i> Citas <span id="fechaSeleccionada"></span></h3>
+                <div>
+                    <button class="btn btn-success btn-sm me-2" onclick="exportarCitas()">
+                        <i class="fas fa-download"></i> Exportar
+                    </button>
+                </div>
+            </div>
+            <div id="citasList">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Cargando citas...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para crear nueva cita -->
+    <div class="modal fade" id="nuevaCitaModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-plus"></i> Crear Nueva Cita</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formNuevaCita">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="nuevaCitaNombre" class="form-label">👤 Nombre completo *</label>
+                                    <input type="text" class="form-control" id="nuevaCitaNombre" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="nuevaCitaEmail" class="form-label">📧 Email *</label>
+                                    <input type="email" class="form-control" id="nuevaCitaEmail" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="nuevaCitaTelefono" class="form-label">📞 Teléfono *</label>
+                                    <input type="tel" class="form-control" id="nuevaCitaTelefono" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="nuevaCitaMotivo" class="form-label">📝 Motivo *</label>
+                                    <select class="form-select" id="nuevaCitaMotivo" required>
+                                        <option value="">Selecciona un motivo</option>
+                                        <option value="Revisión periódica">Revisión periódica</option>
+                                        <option value="Limpieza Dental">Limpieza Dental</option>
+                                        <option value="Empaste Dental">Empaste Dental</option>
+                                        <option value="Ortodoncia">Ortodoncia</option>
+                                        <option value="Implante Dental">Implante Dental</option>
+                                        <option value="Blanqueamiento">Blanqueamiento</option>
+                                        <option value="Corona Dental">Corona Dental</option>
+                                        <option value="Otros motivos">Otros motivos</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="nuevaCitaFecha" class="form-label">📅 Fecha *</label>
+                                    <input type="date" class="form-control" id="nuevaCitaFecha" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="nuevaCitaHora" class="form-label">🕐 Hora *</label>
+                                    <select class="form-select" id="nuevaCitaHora" required>
+                                        <option value="">Selecciona una hora</option>
+                                        <option value="09:00">09:00</option>
+                                        <option value="09:30">09:30</option>
+                                        <option value="10:00">10:00</option>
+                                        <option value="10:30">10:30</option>
+                                        <option value="11:00">11:00</option>
+                                        <option value="11:30">11:30</option>
+                                        <option value="12:00">12:00</option>
+                                        <option value="16:00">16:00</option>
+                                        <option value="16:30">16:30</option>
+                                        <option value="17:00">17:00</option>
+                                        <option value="17:30">17:30</option>
+                                        <option value="18:00">18:00</option>
+                                        <option value="18:30">18:30</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="nuevaCitaDescripcion" class="form-label">📝 Descripción adicional</label>
+                            <textarea class="form-control" id="nuevaCitaDescripcion" rows="3" placeholder="Información adicional sobre la cita..."></textarea>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="nuevaCitaEstado" class="form-label">📊 Estado</label>
+                            <select class="form-select" id="nuevaCitaEstado">
+                                <option value="pendiente">Pendiente</option>
+                                <option value="confirmada">Confirmada</option>
+                                <option value="completada">Completada</option>
+                                <option value="cancelada">Cancelada</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="crearNuevaCita()">
+                        <i class="fas fa-save"></i> Crear Cita
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let citas = [];
+        let vistaActual = 'lista';
+
+        // Cargar citas al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarCitas();
+        });
+
+        // Función para cargar citas
+        async function cargarCitas() {
+            try {
+                const fechaInicio = document.getElementById('fechaInicio').value;
+                const fechaFin = document.getElementById('fechaFin').value;
+                const estado = document.getElementById('estadoFiltro').value;
+
+                let url = '/api/citas?';
+                if (fechaInicio) url += `fecha_inicio=${fechaInicio}&`;
+                if (fechaFin) url += `fecha_fin=${fechaFin}&`;
+                if (estado !== 'todos') url += `estado=${estado}`;
+
+                const response = await fetch(url);
+                citas = await response.json();
+
+                mostrarCitas();
+                actualizarEstadisticas();
+            } catch (error) {
+                console.error('Error al cargar citas:', error);
+                document.getElementById('citasList').innerHTML = `
+                    <div class="alert alert-danger">
+                        Error al cargar las citas. Por favor, inténtalo de nuevo.
+                    </div>
+                `;
+            }
+        }
+
+        // Función para mostrar citas
+        function mostrarCitas() {
+            const container = document.getElementById('citasList');
+            
+            if (citas.length === 0) {
+                container.innerHTML = `
+                    <div class="no-citas">
+                        <i class="fas fa-calendar-times"></i>
+                        <h5>No hay citas</h5>
+                        <p>No se encontraron citas con los filtros aplicados.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Función para formatear fecha de YYYY-MM-DD a dd/mm/aaaa
+            function formatearFecha(fechaStr) {
+                const [year, month, day] = fechaStr.split('-');
+                return `${day}/${month}/${year}`;
+            }
+
+            const citasHTML = citas.map(cita => `
+                <div class="cita-item">
+                    <div class="cita-header">
+                        <span class="cita-nombre">${cita.nombre}</span>
+                        <span class="cita-estado estado-${cita.estado}">${cita.estado}</span>
+                    </div>
+                    <div class="cita-details">
+                        <div><i class="fas fa-calendar"></i> ${formatearFecha(cita.fecha)} - ${cita.hora}</div>
+                        <div><i class="fas fa-phone"></i> ${cita.telefono}</div>
+                        <div><i class="fas fa-envelope"></i> ${cita.email}</div>
+                        <div><i class="fas fa-stethoscope"></i> ${cita.motivo}</div>
+                    </div>
+                    <div class="cita-actions">
+                        ${cita.estado === 'pendiente' ? 
+                            `<button class="btn-action btn-confirm" onclick="cambiarEstado(${cita.id}, 'confirmada')">
+                                <i class="fas fa-check"></i> Confirmar
+                            </button>` : ''
+                        }
+                        ${cita.estado === 'confirmada' ? 
+                            `<button class="btn-action btn-complete" onclick="cambiarEstado(${cita.id}, 'completada')">
+                                <i class="fas fa-check-double"></i> Completar
+                            </button>` : ''
+                        }
+                        ${cita.estado !== 'cancelada' && cita.estado !== 'completada' ? 
+                            `<button class="btn-action btn-cancel" onclick="cambiarEstado(${cita.id}, 'cancelada')">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>` : ''
+                        }
+                        <button class="btn-action btn-delete" onclick="eliminarCita(${cita.id})">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+                    </div>
+                    <div class="contact-buttons">
+                        <button class="btn-whatsapp" onclick="contactarWhatsApp('${cita.telefono}', '${cita.nombre}')">
+                            <i class="fab fa-whatsapp"></i> WhatsApp
+                        </button>
+                        <button class="btn-email" onclick="contactarEmail('${cita.email}', '${cita.nombre}')">
+                            <i class="fas fa-envelope"></i> Email
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = citasHTML;
+        }
+
+        // Función para actualizar estadísticas
+        function actualizarEstadisticas() {
+            const total = citas.length;
+            const pendientes = citas.filter(c => c.estado === 'pendiente').length;
+            const confirmadas = citas.filter(c => c.estado === 'confirmada').length;
+            const completadas = citas.filter(c => c.estado === 'completada').length;
+
+            document.getElementById('totalCitas').textContent = total;
+            document.getElementById('citasPendientes').textContent = pendientes;
+            document.getElementById('citasConfirmadas').textContent = confirmadas;
+            document.getElementById('citasCompletadas').textContent = completadas;
+        }
+
+        // Función para aplicar filtros
+        function aplicarFiltros() {
+            cargarCitas();
+        }
+
+        // Función para limpiar filtros
+        function limpiarFiltros() {
+            document.getElementById('fechaInicio').value = '';
+            document.getElementById('fechaFin').value = '';
+            document.getElementById('estadoFiltro').value = 'todos';
+            cargarCitas();
+        }
+
+        // Función para cambiar estado de cita
+        async function cambiarEstado(citaId, nuevoEstado) {
+            try {
+                const response = await fetch(`/api/cita/${citaId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ estado: nuevoEstado })
+                });
+
+                if (response.ok) {
+                    cargarCitas();
+                } else {
+                    alert('Error al cambiar el estado de la cita');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al cambiar el estado de la cita');
+            }
+        }
+
+        // Función para eliminar cita
+        async function eliminarCita(citaId) {
+            if (!confirm('¿Estás seguro de que quieres eliminar esta cita?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/cita/${citaId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    cargarCitas();
+                } else {
+                    alert('Error al eliminar la cita');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al eliminar la cita');
+            }
+        }
+
+        // Función para abrir modal de nueva cita
+        function abrirModalNuevaCita() {
+            // Establecer fecha actual por defecto
+            const hoy = new Date();
+            const fechaActual = hoy.getFullYear() + '-' +
+                String(hoy.getMonth() + 1).padStart(2, '0') + '-' +
+                String(hoy.getDate()).padStart(2, '0');
+            
+            document.getElementById('nuevaCitaFecha').value = fechaActual;
+            
+            const modal = new bootstrap.Modal(document.getElementById('nuevaCitaModal'));
+            modal.show();
+        }
+
+        // Función para crear nueva cita
+        async function crearNuevaCita() {
+            const form = document.getElementById('formNuevaCita');
+            
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const citaData = {
+                nombre: document.getElementById('nuevaCitaNombre').value,
+                email: document.getElementById('nuevaCitaEmail').value,
+                telefono: document.getElementById('nuevaCitaTelefono').value,
+                motivo: document.getElementById('nuevaCitaMotivo').value,
+                fecha: document.getElementById('nuevaCitaFecha').value,
+                hora: document.getElementById('nuevaCitaHora').value,
+                descripcion: document.getElementById('nuevaCitaDescripcion').value,
+                estado: document.getElementById('nuevaCitaEstado').value
+            };
+
+            try {
+                const response = await fetch('/api/crear-cita', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(citaData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('nuevaCitaModal')).hide();
+                    form.reset();
+                    cargarCitas();
+                    alert('Cita creada exitosamente');
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al crear la cita');
+            }
+        }
+
+        // Función para exportar citas
+        function exportarCitas() {
+            const fechaActual = new Date().toISOString().split('T')[0];
+            const csvContent = generarCSV();
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", `citas_${fechaActual}.csv`);
+            link.click();
+        }
+
+        // Función para generar CSV
+        function generarCSV() {
+            const headers = ['ID', 'Nombre', 'Email', 'Teléfono', 'Motivo', 'Fecha', 'Hora', 'Estado'];
+            const rows = citas.map(cita => [
+                cita.id,
+                cita.nombre,
+                cita.email,
+                cita.telefono,
+                cita.motivo,
+                cita.fecha,
+                cita.hora,
+                cita.estado
+            ]);
+
+            const csvContent = [headers, ...rows]
+                .map(row => row.map(field => `"${field}"`).join(','))
+                .join('\n');
+
+            return csvContent;
+        }
+
+        // Funciones de contacto
+        function contactarWhatsApp(telefono, nombre) {
+            const mensaje = `Hola ${nombre}, te contactamos desde la clínica dental.`;
+            const url = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
+            window.open(url, '_blank');
+        }
+
+        function contactarEmail(email, nombre) {
+            const asunto = 'Información sobre tu cita dental';
+            const mensaje = `Hola ${nombre},\n\nTe contactamos desde la clínica dental.\n\nSaludos cordiales.`;
+            const url = `mailto:${email}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(mensaje)}`;
+            window.open(url);
+        }
+    </script>
+</body>
+</html>
