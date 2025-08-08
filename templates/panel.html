@@ -602,6 +602,12 @@
             border-radius: 12px;
             padding: 20px;
             box-shadow: var(--shadow-md);
+            position: relative;
+        }
+        
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
         }
 
         .loading {
@@ -797,11 +803,15 @@
             <div class="row">
                 <div class="col-md-6">
                     <h5>Citas por Día de la Semana</h5>
-                    <div class="chart-container" id="chartDias"></div>
+                    <div class="chart-container">
+                        <canvas id="chartDias"></canvas>
+                    </div>
                 </div>
                 <div class="col-md-6">
                     <h5>Citas por Tratamiento</h5>
-                    <div class="chart-container" id="chartTratamientos"></div>
+                    <div class="chart-container">
+                        <canvas id="chartTratamientos"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -928,7 +938,17 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            // Verificar que Chart.js se cargue correctamente
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof Chart !== 'undefined') {
+                    console.log('✅ Chart.js cargado correctamente');
+                } else {
+                    console.error('❌ Chart.js no se cargó');
+                }
+            });
+        </script>
     <script>
         let vistaActual = 'semana';
         let fechaActual = new Date();
@@ -964,8 +984,11 @@
         // Cargar estadísticas
         async function cargarEstadisticas() {
             try {
+                console.log('📊 Cargando estadísticas...');
                 const response = await fetch('/api/estadisticas');
                 const data = await response.json();
+                
+                console.log('📊 Estadísticas recibidas:', data);
                 
                 document.getElementById('totalCitas').textContent = data.total_citas;
                 document.getElementById('citasPendientes').textContent = data.citas_pendientes;
@@ -975,7 +998,7 @@
                 
                 generarGraficos(data);
             } catch (error) {
-                console.error('Error cargando estadísticas:', error);
+                console.error('❌ Error cargando estadísticas:', error);
             }
         }
 
@@ -1516,56 +1539,111 @@
 
         // Generar gráficos
         function generarGraficos(data) {
+            console.log('📊 Generando gráficos con datos:', data);
+            
+            // Verificar que Chart.js esté disponible
+            if (typeof Chart === 'undefined') {
+                console.error('❌ Chart.js no está cargado');
+                return;
+            }
+            
             // Gráfico de citas por día de la semana
             const ctxDias = document.getElementById('chartDias');
+            console.log('📈 Elemento chartDias:', ctxDias);
+            
             if (ctxDias) {
-                new Chart(ctxDias, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
-                        datasets: [{
-                            label: 'Citas',
-                            data: data.citas_por_dia.map(item => item[1]),
-                            backgroundColor: 'rgba(37, 99, 235, 0.8)',
-                            borderColor: 'rgba(37, 99, 235, 1)',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true
+                console.log('📊 Datos para gráfico de días:', data.citas_por_dia);
+                
+                try {
+                    // Preparar datos para el gráfico
+                    const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                    const datosDias = new Array(7).fill(0);
+                    
+                    // Mapear datos de la base de datos (0=Domingo, 1=Lunes, etc.)
+                    if (data.citas_por_dia && Array.isArray(data.citas_por_dia)) {
+                        data.citas_por_dia.forEach(item => {
+                            const diaIndex = parseInt(item[0]);
+                            const cantidad = parseInt(item[1]);
+                            if (diaIndex >= 0 && diaIndex < 7) {
+                                datosDias[diaIndex] = cantidad;
+                            }
+                        });
+                    }
+                    
+                    console.log('📊 Datos procesados para gráfico de días:', datosDias);
+                    
+                    new Chart(ctxDias, {
+                        type: 'bar',
+                        data: {
+                            labels: diasSemana,
+                            datasets: [{
+                                label: 'Citas',
+                                data: datosDias,
+                                backgroundColor: 'rgba(37, 99, 235, 0.8)',
+                                borderColor: 'rgba(37, 99, 235, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
                             }
                         }
-                    }
-                });
+                    });
+                    console.log('✅ Gráfico de días creado exitosamente');
+                } catch (error) {
+                    console.error('❌ Error creando gráfico de días:', error);
+                }
             }
 
             // Gráfico de citas por tratamiento
             const ctxTratamientos = document.getElementById('chartTratamientos');
+            console.log('📈 Elemento chartTratamientos:', ctxTratamientos);
+            
             if (ctxTratamientos) {
-                new Chart(ctxTratamientos, {
-                    type: 'doughnut',
-                    data: {
-                        labels: data.citas_por_tratamiento.map(item => item[0]),
-                        datasets: [{
-                            data: data.citas_por_tratamiento.map(item => item[1]),
-                            backgroundColor: [
-                                'rgba(37, 99, 235, 0.8)',
-                                'rgba(16, 185, 129, 0.8)',
-                                'rgba(245, 158, 11, 0.8)',
-                                'rgba(239, 68, 68, 0.8)',
-                                'rgba(139, 92, 246, 0.8)'
-                            ]
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false
+                console.log('📊 Datos para gráfico de tratamientos:', data.citas_por_tratamiento);
+                
+                try {
+                    // Verificar que hay datos de tratamientos
+                    if (!data.citas_por_tratamiento || !Array.isArray(data.citas_por_tratamiento) || data.citas_por_tratamiento.length === 0) {
+                        console.log('⚠️ No hay datos de tratamientos para mostrar');
+                        ctxTratamientos.parentElement.innerHTML = '<p class="text-center text-muted">No hay datos de tratamientos disponibles</p>';
+                        return;
                     }
-                });
+                    
+                    const labels = data.citas_por_tratamiento.map(item => item[0]);
+                    const datos = data.citas_por_tratamiento.map(item => parseInt(item[1]));
+                    
+                    console.log('📊 Datos procesados para gráfico de tratamientos:', { labels, datos });
+                    
+                    new Chart(ctxTratamientos, {
+                        type: 'doughnut',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: datos,
+                                backgroundColor: [
+                                    'rgba(37, 99, 235, 0.8)',
+                                    'rgba(16, 185, 129, 0.8)',
+                                    'rgba(245, 158, 11, 0.8)',
+                                    'rgba(239, 68, 68, 0.8)',
+                                    'rgba(139, 92, 246, 0.8)'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false
+                        }
+                    });
+                    console.log('✅ Gráfico de tratamientos creado exitosamente');
+                } catch (error) {
+                    console.error('❌ Error creando gráfico de tratamientos:', error);
+                }
             }
         }
 
