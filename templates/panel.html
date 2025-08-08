@@ -35,7 +35,7 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
             min-height: 100vh;
             color: var(--text-primary);
             line-height: 1.6;
@@ -76,6 +76,31 @@
             display: flex;
             align-items: center;
             gap: 12px;
+        }
+
+        .btn-volver {
+            background: linear-gradient(135deg, var(--accent-color) 0%, #2563eb 100%);
+            border: none;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-volver:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            color: white;
+            text-decoration: none;
         }
 
         .header h1 i {
@@ -600,80 +625,138 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Mejoras para responsive */
+        /* Responsive - Mantener exactamente igual que escritorio */
         @media (max-width: 768px) {
             .panel-container {
-                padding: 16px;
-            }
-            
-            .header {
                 padding: 24px;
             }
             
+            .header {
+                padding: 32px;
+            }
+            
             .header h1 {
-                font-size: 1.75rem;
+                font-size: 2.25rem;
+            }
+
+            .btn-volver {
+                padding: 12px 16px;
+                font-size: 0.9rem;
             }
             
             .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 16px;
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 24px;
             }
             
             .stat-card {
-                padding: 20px 16px;
+                padding: 28px 24px;
             }
             
             .calendar-section,
             .charts-section {
-                padding: 24px;
+                padding: 32px;
             }
             
             .calendar-grid {
                 grid-template-columns: repeat(7, 1fr);
-                font-size: 0.8rem;
-                gap: 8px;
+                gap: 12px;
             }
             
             .calendar-day {
-                padding: 16px 8px;
-                min-height: 80px;
+                padding: 24px 16px;
+                min-height: 120px;
             }
             
             .section-header {
-                flex-direction: column;
-                gap: 16px;
-                align-items: stretch;
+                flex-direction: row;
+                gap: 0;
+                align-items: center;
             }
             
             .calendar-controls {
-                justify-content: center;
+                justify-content: flex-end;
             }
             
             .cita-item {
-                padding: 16px;
+                padding: 20px;
             }
             
             .cita-actions {
-                flex-direction: column;
+                flex-direction: row;
             }
             
             .contact-buttons {
-                flex-direction: column;
+                flex-direction: row;
             }
         }
 
         @media (max-width: 480px) {
+            .panel-container {
+                padding: 24px;
+            }
+            
+            .header {
+                padding: 32px;
+            }
+            
+            .header h1 {
+                font-size: 2.25rem;
+            }
+
+            .btn-volver {
+                padding: 12px 16px;
+                font-size: 0.9rem;
+            }
+            
             .stats-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 24px;
+            }
+            
+            .stat-card {
+                padding: 28px 24px;
+            }
+            
+            .calendar-section,
+            .charts-section {
+                padding: 32px;
+            }
+            
+            .calendar-grid {
+                grid-template-columns: repeat(7, 1fr);
+                gap: 12px;
             }
             
             .calendar-day {
-                min-height: 60px;
-                padding: 12px 6px;
+                padding: 24px 16px;
+                min-height: 120px;
             }
             
             .calendar-day .day-number {
-                font-size: 1rem;
+                font-size: 1.25rem;
+            }
+            
+            .section-header {
+                flex-direction: row;
+                gap: 0;
+                align-items: center;
+            }
+            
+            .calendar-controls {
+                justify-content: flex-end;
+            }
+            
+            .cita-item {
+                padding: 20px;
+            }
+            
+            .cita-actions {
+                flex-direction: row;
+            }
+            
+            .contact-buttons {
+                flex-direction: row;
             }
         }
     </style>
@@ -682,8 +765,16 @@
     <div class="panel-container">
         <!-- Header -->
         <div class="header">
-            <h1><i class="fas fa-tooth"></i> Panel de Control - Clínica Dental</h1>
-            <p class="text-muted">Gestión de citas y estadísticas para empleados</p>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <h1><i class="fas fa-tachometer-alt"></i> Panel de Control - Clínica Dental</h1>
+                    <p class="text-muted">Gestión de citas y estadísticas para empleados</p>
+                </div>
+                <a href="/" class="btn-volver" title="Volver al inicio">
+                    <i class="fas fa-home"></i>
+                    <span>Inicio</span>
+                </a>
+            </div>
         </div>
 
         <!-- Calendario -->
@@ -697,6 +788,9 @@
                         <button class="btn-calendar" onclick="cambiarVista('mes')">Mes</button>
                     </div>
                     <div class="ms-3">
+                        <button class="btn btn-outline-secondary btn-sm me-2" onclick="recargarCitas()" title="Recargar citas">
+                            <i class="fas fa-sync-alt"></i> Recargar
+                        </button>
                         <a href="/citas" class="btn btn-outline-primary btn-sm me-2">
                             <i class="fas fa-list"></i> Listado de Citas
                         </a>
@@ -890,17 +984,26 @@
 
         // Inicialización
         document.addEventListener('DOMContentLoaded', function() {
-            cargarEstadisticas();
+            console.log('🚀 Iniciando panel...');
             
-            // Cargar citas una sola vez al inicio
-            cargarCitas().then(() => {
+            // Cargar estadísticas y citas en paralelo
+            Promise.all([
+                cargarEstadisticas(),
+                cargarCitas()
+            ]).then(([estadisticas, citasData]) => {
+                console.log('✅ Datos cargados correctamente');
+                console.log('📊 Citas disponibles:', citas.length);
+                
+                // Generar calendario después de cargar los datos
                 generarCalendario();
-                // Sincronizar la vista inicial
+                
+                // Sincronizar la vista inicial con un pequeño delay
                 setTimeout(() => {
                     sincronizarVista();
-                }, 100);
+                }, 200);
+                
             }).catch(error => {
-                console.error('Error en inicialización:', error);
+                console.error('❌ Error en inicialización:', error);
                 // Generar calendario incluso si hay error
                 generarCalendario();
             });
@@ -927,6 +1030,7 @@
         // Cargar citas
         async function cargarCitas(filtros = {}) {
             try {
+                console.log('🔄 Cargando citas...');
                 const params = new URLSearchParams(filtros);
                 const response = await fetch(`/api/citas?${params}`);
                 
@@ -934,10 +1038,22 @@
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
-                citas = await response.json();
-                return citas; // Retornar las citas para uso en promesas
+                const citasData = await response.json();
+                console.log('📊 Citas cargadas:', citasData.length);
+                
+                // Asegurar que citas sea siempre un array
+                citas = Array.isArray(citasData) ? citasData : [];
+                
+                // Debug: mostrar las primeras citas
+                if (citas.length > 0) {
+                    console.log('📋 Primeras citas:', citas.slice(0, 3));
+                } else {
+                    console.log('⚠️ No se encontraron citas');
+                }
+                
+                return citas;
             } catch (error) {
-                console.error('Error cargando citas:', error);
+                console.error('❌ Error cargando citas:', error);
                 citas = []; // Asegurar que citas sea un array vacío en caso de error
                 return [];
             }
@@ -945,21 +1061,42 @@
 
         // Mostrar citas en la lista
         function mostrarCitas(fechaSeleccionada = null) {
+            console.log('📋 Mostrando citas...');
+            console.log('📅 Fecha seleccionada:', fechaSeleccionada);
+            console.log('📊 Total de citas disponibles:', citas.length);
+            
             const container = document.getElementById('citasList');
             const fechaSpan = document.getElementById('fechaSeleccionada');
+            
+            // Verificar que citas sea un array
+            if (!Array.isArray(citas)) {
+                console.error('❌ Error: citas no es un array:', citas);
+                citas = [];
+            }
             
             // Filtrar citas por fecha si se especifica
             let citasAMostrar = citas;
             if (fechaSeleccionada) {
                 citasAMostrar = citas.filter(cita => cita.fecha === fechaSeleccionada);
-                fechaSpan.innerHTML = `- ${new Date(fechaSeleccionada).toLocaleDateString('es-ES', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                })}`;
+                console.log(`📅 Citas para ${fechaSeleccionada}:`, citasAMostrar.length);
+                
+                if (fechaSpan) {
+                    fechaSpan.innerHTML = `- ${new Date(fechaSeleccionada).toLocaleDateString('es-ES', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    })}`;
+                }
             } else {
-                fechaSpan.innerHTML = '';
+                if (fechaSpan) {
+                    fechaSpan.innerHTML = '';
+                }
+            }
+            
+            if (!container) {
+                console.error('❌ Error: No se encontró el contenedor de citas');
+                return;
             }
             
             if (citasAMostrar.length === 0) {
@@ -1011,9 +1148,24 @@
             `).join('');
         }
 
+        // Recargar citas y actualizar vista
+        async function recargarCitas() {
+            console.log('🔄 Recargando citas...');
+            try {
+                await cargarCitas();
+                await cargarEstadisticas();
+                generarCalendario();
+                sincronizarVista();
+                console.log('✅ Citas recargadas correctamente');
+            } catch (error) {
+                console.error('❌ Error recargando citas:', error);
+            }
+        }
+
         // Cambiar estado de cita
         async function cambiarEstado(citaId, nuevoEstado) {
             try {
+                console.log(`🔄 Cambiando estado de cita ${citaId} a ${nuevoEstado}`);
                 const response = await fetch(`/api/cita/${citaId}`, {
                     method: 'PUT',
                     headers: {
@@ -1023,11 +1175,12 @@
                 });
                 
                 if (response.ok) {
-                    cargarCitas();
-                    cargarEstadisticas();
+                    console.log('✅ Estado cambiado correctamente');
+                    await recargarCitas();
+                    
                     // Mantener la fecha seleccionada si hay una
                     const fechaSpan = document.getElementById('fechaSeleccionada');
-                    if (fechaSpan.innerHTML) {
+                    if (fechaSpan && fechaSpan.innerHTML) {
                         // Extraer la fecha del texto del span usando una expresión regular más robusta
                         const fechaTexto = fechaSpan.innerHTML.match(/\d{4}-\d{2}-\d{2}/);
                         if (fechaTexto) {
@@ -1038,9 +1191,11 @@
                             mostrarCitas(fechaActualStr);
                         }
                     }
+                } else {
+                    console.error('❌ Error al cambiar estado:', response.status);
                 }
             } catch (error) {
-                console.error('Error cambiando estado:', error);
+                console.error('❌ Error cambiando estado:', error);
             }
         }
 

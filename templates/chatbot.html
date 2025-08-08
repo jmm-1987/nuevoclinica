@@ -34,7 +34,7 @@
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
             min-height: 100vh;
             width: 100%;
             display: flex;
@@ -86,6 +86,28 @@
             margin: 5px 0 0 0;
             opacity: 0.9;
             font-size: 0.9rem;
+        }
+
+        .btn-volver {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-volver:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: scale(1.1);
         }
 
         .chat-messages {
@@ -649,6 +671,12 @@
                 border-radius: 0;
             }
 
+            .btn-volver {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+
             .images-container {
                 grid-template-columns: 1fr;
             }
@@ -672,8 +700,15 @@
     <div class="chat-wrapper">
         <div class="chat-container">
             <div class="chat-header">
-                <h1>🦷 Clínica Dental</h1>
-                <p>Asistente Virtual</p>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h1><i class="fas fa-tooth"></i> Clínica Dental</h1>
+                        <p>Asistente Virtual</p>
+                    </div>
+                    <button onclick="window.location.href='/'" class="btn-volver" title="Volver al inicio">
+                        <i class="fas fa-home"></i>
+                    </button>
+                </div>
             </div>
             
             <div class="chat-messages" id="chatMessages">
@@ -740,17 +775,21 @@
             }
             
             async sendChatRequest(action, value = null, additionalData = {}) {
+                const requestData = {
+                    action: action,
+                    value: value,
+                    ...additionalData
+                };
+                
+                console.log(`Enviando solicitud:`, requestData);
+                
                 try {
                     const response = await fetch('/api/chat', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({
-                            action: action,
-                            value: value,
-                            ...additionalData
-                        })
+                        body: JSON.stringify(requestData)
                     });
                     
                     if (!response.ok) {
@@ -933,12 +972,18 @@
                 return html;
             }
 
-            renderCalendar(data) {
-                const today = new Date();
-                
-                // Determinar qué mes mostrar basado en las fechas disponibles
-                let displayMonth = today.getMonth();
-                let displayYear = today.getFullYear();
+                         renderCalendar(data) {
+                 const today = new Date();
+                 
+                 // Debug: mostrar las fechas disponibles que vienen del servidor
+                 console.log('=== DEBUG CALENDARIO ===');
+                 console.log('Fechas disponibles del servidor:', data.available_dates);
+                 console.log('Tipo de available_dates:', typeof data.available_dates);
+                 console.log('Es array?', Array.isArray(data.available_dates));
+                 
+                 // Determinar qué mes mostrar basado en las fechas disponibles
+                 let displayMonth = today.getMonth();
+                 let displayYear = today.getFullYear();
                 
                 if (data.available_dates && Array.isArray(data.available_dates) && data.available_dates.length > 0) {
                     // Tomar la primera fecha disponible para determinar el mes a mostrar
@@ -947,8 +992,21 @@
                     displayYear = firstAvailableDate.getFullYear();
                 }
                 
+                // Generar días del mes - MOVER ANTES DE SU USO
+                const firstDay = new Date(displayYear, displayMonth, 1);
+                const lastDay = new Date(displayYear, displayMonth + 1, 0);
+                const startDate = new Date(firstDay);
+                // CORRECCIÓN: Ajustar para que el lunes sea el primer día de la semana
+                // getDay() devuelve 0=Domingo, 1=Lunes, etc.
+                // Queremos que el lunes sea el primer día (índice 1)
+                const dayOfWeek = firstDay.getDay(); // 0=Domingo, 1=Lunes, etc.
+                const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convertir a lunes como primer día
+                startDate.setDate(startDate.getDate() - mondayOffset);
+                
                 console.log(`Mostrando calendario para: ${displayMonth}/${displayYear}`);
-
+                console.log(`Primer día del mes: ${firstDay.toDateString()}`);
+                console.log(`Día de la semana del primer día: ${firstDay.getDay()}`);
+                console.log(`Fecha de inicio del calendario: ${startDate.toDateString()}`);
                 
                 let html = '<div class="calendar-container">';
                 html += '<div class="calendar-header">';
@@ -967,34 +1025,45 @@
                     html += `<div class="calendar-day-header">${day}</div>`;
                 });
                 
-                // Generar días del mes
-                const firstDay = new Date(displayYear, displayMonth, 1);
-                const lastDay = new Date(displayYear, displayMonth + 1, 0);
-                const startDate = new Date(firstDay);
-                startDate.setDate(startDate.getDate() - firstDay.getDay() + 1);
-                
                 for (let i = 0; i < 42; i++) {
                     const currentDate = new Date(startDate);
                     currentDate.setDate(startDate.getDate() + i);
                     
-                    const isCurrentMonth = currentDate.getMonth() === displayMonth;
-                    const isToday = currentDate.toDateString() === today.toDateString();
-                    const isPast = currentDate < today;
+                                         const isCurrentMonth = currentDate.getMonth() === displayMonth;
+                     const isToday = currentDate.toDateString() === today.toDateString();
+                     const isPast = currentDate < today;
+                     
+                     // Debug para el lunes
+                     if (currentDate.getDay() === 1) { // Lunes
+                         console.log(`Lunes ${currentDate.getDate()}: isPast=${isPast}, isCurrentMonth=${isCurrentMonth}, fecha=${currentDate.toDateString()}, today=${today.toDateString()}`);
+                     }
                     
-                    // Simplificar la lógica de disponibilidad
-                    let isAvailable = false;
-                    if (data.available_dates && Array.isArray(data.available_dates) && data.available_dates.length > 0) {
-                        const dateString = currentDate.toISOString().split('T')[0];
-                        isAvailable = data.available_dates.includes(dateString);
-                        if (isCurrentMonth && !isPast) {
-                            console.log(`Fecha ${dateString}: ${isAvailable ? 'disponible' : 'no disponible'}`);
-                        }
-                    } else {
-                        console.error('Error: available_dates no es válido:', data.available_dates);
-                        // Fallback: mostrar días futuros como disponibles
-                        if (isCurrentMonth && !isPast) {
-                            isAvailable = true;
-                        }
+                                         // Simplificar la lógica de disponibilidad
+                     let isAvailable = false;
+                     if (data.available_dates && Array.isArray(data.available_dates) && data.available_dates.length > 0) {
+                         // Construir la fecha en formato YYYY-MM-DD usando componentes locales
+                         const year = currentDate.getFullYear();
+                         const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+                         const day = String(currentDate.getDate()).padStart(2, '0');
+                         const localDateString = `${year}-${month}-${day}`;
+                         
+                         isAvailable = data.available_dates.includes(localDateString);
+                         if (isCurrentMonth && !isPast) {
+                             console.log(`Fecha ${localDateString}: ${isAvailable ? 'disponible' : 'no disponible'}`);
+                         }
+                     } else {
+                         console.error('Error: available_dates no es válido:', data.available_dates);
+                         // Fallback: mostrar días futuros como disponibles
+                         if (isCurrentMonth && !isPast) {
+                             isAvailable = true;
+                         }
+                     }
+                    
+                    // Debug: mostrar información del día actual
+                    if (isCurrentMonth && !isPast) {
+                        const currentDayOfWeek = currentDate.getDay();
+                        const dayName = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][currentDayOfWeek];
+                        console.log(`Día ${currentDate.getDate()}: ${dayName} - ${isAvailable ? 'disponible' : 'no disponible'}`);
                     }
                     
                     let classes = 'calendar-day';
@@ -1010,7 +1079,13 @@
                     
                     if (isToday) classes += ' today';
                     
-                    html += `<div class="${classes}" data-date="${currentDate.toISOString().split('T')[0]}">${currentDate.getDate()}</div>`;
+                    // Construir la fecha en formato YYYY-MM-DD usando componentes locales para evitar problemas de zona horaria
+                    const year = currentDate.getFullYear();
+                    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(currentDate.getDate()).padStart(2, '0');
+                    const localDateString = `${year}-${month}-${day}`;
+                    
+                    html += `<div class="${classes}" data-date="${localDateString}">${currentDate.getDate()}</div>`;
                 }
                 
                 html += '</div>';
@@ -1145,6 +1220,12 @@
                     day.addEventListener('click', async (e) => {
                         e.preventDefault();
                         const selectedDate = day.dataset.date;
+                        const dayText = day.textContent;
+                        
+                        console.log(`Día clickeado: ${dayText} (${selectedDate})`);
+                        console.log(`Fecha seleccionada: ${selectedDate}`);
+                        console.log(`Elemento del día:`, day);
+                        console.log(`data-date attribute:`, day.getAttribute('data-date'));
                         
                         // Limpiar selección anterior
                         messageDiv.querySelectorAll('.calendar-day').forEach(d => {
@@ -1157,11 +1238,14 @@
                         // Guardar fecha en el estado
                         this.currentState.fecha = selectedDate;
                         
+                        console.log(`Fecha guardada en estado: ${this.currentState.fecha}`);
+                        
                         // Mostrar indicador de escritura
                         this.showTypingIndicator();
                         
                         setTimeout(async () => {
                             this.removeTypingIndicator();
+                            console.log(`Enviando solicitud con fecha: ${selectedDate}`);
                             const response = await this.sendChatRequest('seleccionar_hora', null, {
                                 datos_paciente: this.currentState.datos_paciente,
                                 motivo: this.currentState.motivo,

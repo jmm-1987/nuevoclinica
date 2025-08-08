@@ -24,7 +24,7 @@
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -37,22 +37,23 @@
         }
 
         .welcome-card {
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
             padding: 40px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
             margin-bottom: 30px;
+            backdrop-filter: blur(10px);
         }
 
         .welcome-card h1 {
-            color: var(--primary-color);
+            color: #1e40af;
             font-weight: 700;
             margin-bottom: 20px;
             font-size: 2.5rem;
         }
 
         .welcome-card p {
-            color: #64748b;
+            color: #374151;
             font-size: 1.1rem;
             margin-bottom: 30px;
         }
@@ -109,6 +110,18 @@
             font-size: 1.5rem;
         }
 
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-img {
+            max-width: 200px;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
         @media (max-width: 768px) {
             .buttons-container {
                 flex-direction: column;
@@ -132,18 +145,21 @@
 <body>
     <div class="container">
         <div class="welcome-card">
-            <h1><i class="fas fa-tooth"></i> Clínica Dental</h1>
-            <p>Bienvenido al sistema de gestión de citas de nuestra clínica dental. Selecciona una opción para continuar:</p>
+            <div class="logo-container">
+                <img src="/static/img/logo_jm.png" alt="Logo JM" class="logo-img">
+            </div>
+            <h1></h1>
+            <p>Bienvenido al sistema de gestión de citas. Selecciona una opción para continuar:</p>
             
             <div class="buttons-container">
                 <a href="/chatbot" class="btn btn-custom btn-chatbot">
                     <i class="fas fa-comments icon-large"></i>
-                    <span>Chatbot de Citas</span>
+                    <span>Chatbot de Citas para clientes</span>
                 </a>
                 
                 <a href="/panel" class="btn btn-custom btn-panel">
                     <i class="fas fa-cog icon-large"></i>
-                    <span>Panel de Administración</span>
+                    <span>Panel de Administración para la clínica</span>
                 </a>
             </div>
         </div>

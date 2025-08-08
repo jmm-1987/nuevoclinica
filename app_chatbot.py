@@ -318,6 +318,10 @@ def chat():
             # Obtener citas existentes para la fecha seleccionada
             existing_appointments = get_existing_appointments()
             fecha_seleccionada = data.get('fecha')
+            print(f"=== DEBUG SELECCIONAR HORA ===")
+            print(f"Datos completos recibidos: {data}")
+            print(f"Fecha seleccionada: {fecha_seleccionada}")
+            print(f"Tipo de fecha: {type(fecha_seleccionada)}")
             citas_ocupadas = existing_appointments.get(fecha_seleccionada, [])
             
             # Horarios disponibles (mañana y tarde)
